@@ -1,0 +1,15 @@
+# Debian testing has more recent and better releases
+
+- name: Install apt-get preferences for Debian testing repository
+  copy:
+    src: "{{ ansible_os_family }}/apt_testing.pref"
+    dest: /etc/apt/preferences.d/testing.pref
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Add Debian testing repository
+  apt_repository:
+    repo: "deb http://{{ debian_repo_hostport }}/debian testing main"
+    state: present
+    update_cache: yes

@@ -1,0 +1,97 @@
+# {{ ansible_managed }}
+#
+# see sssd-ldap(5)
+
+[sssd]
+config_file_version = 2
+services = nss, pam, ssh, sudo
+
+# SSSD will not start if you do not configure any domains.
+# Add new domain configurations as [domain/<NAME>] sections, and
+# then add the list of domains (in the order you want them to be
+# queried) to the "domains" attribute below and uncomment it.
+domains = AE-DIR
+
+[local]
+
+create_homedir = true
+
+
+[nss]
+filter_groups = root
+filter_users = root
+reconnection_retries = 3
+
+
+[pam]
+
+pam_verbosity = 1
+
+offline_credentials_expiration = 3 # days
+offline_failed_login_attempts = 6
+offline_failed_login_delay = 2 # minutes
+
+
+[sudo]
+
+sudo_timed = true
+
+
+[domain/AE-DIR]
+
+debug_level = 5
+
+id_provider = ldap
+auth_provider = ldap
+
+# Lower and upper bounds for the IDs
+min_id = 10000
+#max_id = 65535
+
+entry_cache_timeout = 2400
+refresh_expired_interval = 1800
+
+# Note that enabling enumeration will have a moderate performance impact.
+# Consequently, the default value for enumeration is FALSE.
+# Refer to the sssd.conf man page for full details.
+enumerate = false
+
+# Allow offline logins by locally storing password hashes (default: false).
+cache_credentials = true
+
+ldap_tls_cacert = {{ ldap_cacert_pathname }}
+ldap_auth_use_start_tls = True
+ldap_id_use_start_tls = True
+
+ldap_uri = {% for uri in ldap_uris %}{{ uri }},{% endfor %}
+
+ldap_backup_uri = {% for uri in ldap_backup_uris %}{{ uri }},{% endfor %}
+
+# For server authentication
+ldap_default_bind_dn = host={{ ansible_fqdn }},ou=ae-dir
+ldap_default_authtok = {{ ldap_host_password }}
+
+ldap_search_base = ou=ae-dir
+
+ldap_schema = rfc2307bis
+
+ldap_user_object_class = posixAccount
+ldap_group_object_class = posixGroup
+
+# avoid protocol incompatibilities with newer sssd versions by disabling deref:
+ldap_deref_threshold = 1
+
+ldap_user_home_directory = homeDirectory
+ldap_user_shell = loginShell
+ldap_user_ssh_public_key = sshPublicKey
+
+ldap_purge_cache_timeout = 3
+
+ldap_sudo_use_host_filter = false
+ldap_sudo_include_netgroups = false
+ldap_sudo_smart_refresh_interval = 30
+ldap_sudo_full_refresh_interval = 600
+
+# We don't have multiple alias names for IDs
+# => always use cache for ID->name lookup
+proxy_fast_alias = true

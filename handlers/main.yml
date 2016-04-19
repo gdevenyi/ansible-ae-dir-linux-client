@@ -1,0 +1,14 @@
+---
+# handlers file for roles/ae-linux-login
+
+- name: restart sssd
+  service: name=sssd state=restarted
+  when: nsswitch_module=="sss"
+
+- name: restart "{{ nslcd_package_name }}"
+  service: name="{{ nslcd_package_name }}" state=restarted
+  when: nsswitch_module=="ldap"
+
+- name: restart ssh
+  service: name=ssh state=restarted
+

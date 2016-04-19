@@ -1,0 +1,44 @@
+# sssd
+#-----------------------------------------------------------------------
+
+- name: Install sssd, PAM/NSS and LDAP backend packages
+  apt:
+    name: "{{ item }}"
+    state: installed
+    install_recommends: no
+    update_cache: yes
+    cache_valid_time: 8
+    dpkg_options: 'force-confold,force-confdef'
+  notify:
+  - restart sssd
+  with_items:
+  - sssd
+  - sssd-proxy
+  - sssd-ad
+  - sssd-krb5
+  - sssd-krb5
+  - sssd-ldap
+  - sssd-ipa
+  - libnss-sss
+  - libpam-sss
+  - libsss-sudo
+
+- name: Create sssd.conf
+  template:
+    src: "sssd.conf.j2"
+    dest: "{{ sssd_conf_file }}"
+    owner: root
+    group: root
+    mode: 0600
+  notify:
+  - restart sssd
+
+- name: ensure sssd is running (and enable it at boot)
+  service: name=sssd state=started enabled=yes
+
+# sudo
+#-----------------------------------------------------------------------
+
+- name: Install normal sudo
+  apt: name=sudo state=installed install_recommends=no dpkg_options='force-confold,force-confdef'
+

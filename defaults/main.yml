@@ -1,0 +1,46 @@
+---
+# defaults file for roles/ae-linux-login
+
+# Hostname of debian repo server
+debian_repo_hostport: ftp.debian.org:80
+
+# LDAPS URIs of primary AE-DIR servers (e.g. in same data center)
+ldap_uris: []
+
+# LDAPS URIs of backup AE-DIR servers (e.g. in other data center)
+ldap_backup_uris: []
+
+# TLS files
+ldap_cacert_filename: cacert.pem
+ldap_cacert_pathname: "/etc/ssl/certs/{{ ldap_cacert_filename }}"
+
+# which modules to use in /etc/nsswitch.conf
+nsswitch_module: "ldap"
+nsswitch_passwd_module: "{{ nsswitch_module }}"
+nsswitch_group_module: "{{ nsswitch_module }}"
+nsswitch_sudoers_module: "{{ nsswitch_module }}"
+
+# Pathnames for sssd
+sssd_conf_dir: /etc/sssd
+sssd_conf_file: "{{ sssd_conf_dir }}/sssd.conf"
+
+# Pathnames for (py)nslcd
+nslcd_package_name: nslcd
+nslcd_conf_dir: /etc
+nslcd_conf_file: "{{ nslcd_conf_dir }}/nslcd.conf"
+
+
+# LDAP search filter for PAM authorization
+#-----------------------------------------
+# note that AE-DIR already does this implicit via visibility of aeUser entries
+
+# allow only active users (not really necessary)
+pam_authz_search: '(&(objectClass=posixAccount)(uid=$username))'
+
+# Optional security:
+# Check known remote host in attribute 'aeRemoteHost' if attribute is present
+#pam_authz_search: '(&(objectClass=posixAccount)(uid=$username)(|(!(aeRemoteHost=*))(aeRemoteHost=$rhost)))'
+
+# High security:
+# Enforce known remote host in attribute 'aeRemoteHost' in any case
+#pam_authz_search: '(&(objectClass=posixAccount)(uid=$username)(aeRemoteHost=$rhost))'

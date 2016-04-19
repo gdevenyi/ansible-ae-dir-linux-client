@@ -1,0 +1,55 @@
+# {{ ansible_managed }}
+#
+# /etc/nslcd.conf
+# nslcd configuration file. See nslcd.conf(5)
+# for details.
+
+# The user and group nslcd should run as.
+uid nslcd
+gid nslcd
+
+# log scheme
+log syslog info
+
+# The LDAP protocol version to use.
+ldap_version 3
+
+# The location at which the LDAP server(s) should be reachable.
+uri {% for uri in ldap_uris %}{{ uri }} {% endfor %}{% for uri in ldap_backup_uris %}{{ uri }} {% endfor %}
+
+# The search base that will be used for all queries.
+base ou=ae-dir
+# The search scope.
+scope sub
+
+# do not dereference LDAP aliases
+deref never
+# do not follow referrals
+referrals no
+
+# The DN to bind with for normal lookups.
+binddn host={{ ansible_fqdn }},ou=ae-dir
+bindpw {{ ldap_host_password }}
+
+# The DN used for password modifications by root.
+#rootpwmoddn cn=admin,dc=example,dc=com
+
+# SSL options
+#ssl on
+tls_reqcert demand
+tls_cacertfile {{ ldap_cacert_pathname }}
+
+# minimum UID or GID retrieved from LDAP server
+nss_min_uid 10000
+
+# no recursive lookup of nested groups
+nss_nested_groups no
+
+# disable enumeration
+nss_disable_enumeration no
+
+# local password changes not allowed
+pam_password_prohibit_message "Changing password on systems is not allowed!"
+
+# Check the SSH client's hostname in user entry
+#pam_authz_search "{{ pam_authz_search }}"

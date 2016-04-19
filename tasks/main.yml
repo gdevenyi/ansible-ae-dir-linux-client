@@ -1,0 +1,105 @@
+---
+# tasks file for roles/ae-linux-login
+
+- name: "Package repository configuration for platform {{ ansible_os_family }}"
+  include: "{{ ansible_os_family }}-repo.yml"
+
+# python-ldap
+#-----------------------------------------------------------------------
+
+- name: Install python-ldap and pyasn1 modules
+  apt:
+    name: "{{ item }}"
+    state: installed
+    install_recommends: no
+    dpkg_options: 'force-confold,force-confdef'
+  with_items:
+  - python-ldap
+  - python-pyasn1
+  - python-pyasn1-modules
+
+# TLS files
+#-----------------------------------------------------------------------
+
+- name: CA certificate file
+  copy:
+    src: "{{ ldap_cacert_filename }}"
+    dest: "{{ ldap_cacert_pathname }}"
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+  - restart sssd
+
+# SSH authorized keys
+#-----------------------------------------------------------------------
+
+- name: Create directory for SSH authorized_keys and ignore files
+  file: path="/etc/ssh/{{ item }}" state=directory owner=root group=root mode=0755
+  with_items:
+  - authorized_keys
+  - ignore_user_keys
+
+- name: Create ignore file for SSH emergency root keys
+  lineinfile: state=present create=yes dest=/etc/ssh/ignore_user_keys/root line="root" owner=root group=root mode=0640
+
+- name: Install SSH emergency root keys
+  copy: src="ssh_emergency_root_keys" dest="/etc/ssh/authorized_keys/root" owner=root group=root mode=0640
+
+- name: Install SSH key grabber script
+  copy: src="search_authorized_keys.py" dest="/usr/local/sbin/search_authorized_keys.py" owner=root group=root mode=0700
+
+- set_fact:
+    search_ssh_config: "{{ sssd_conf_file }}"
+    when: nsswitch_module == 'sss'
+- set_fact:
+    search_ssh_config: "{{ nslcd_conf_file }}"
+    when: nsswitch_module == 'ldap'
+
+- name: Run SSH key grabber script as CRON job
+  cron:
+    name: "search_authorized_keys"
+    user: root
+    cron_file: search_authorized_keys
+    minute: "*/4"
+    job: "/usr/local/sbin/search_authorized_keys.py {{ search_ssh_config }} /etc/ssh/authorized_keys /etc/ssh/ignore_user_keys"
+
+- name: Install sshd_config
+  template:
+    src: "sshd_config.j2"
+    dest: "/etc/ssh/sshd_config"
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart ssh
+
+- name: ensure SSH demon is running (and enable it at boot)
+  service: name=ssh state=started enabled=yes
+
+# Install a NSS/PAM caching demon
+#-----------------------------------------------------------------------
+
+- name: "Install caching demon for module {{ nsswitch_module }}"
+  include: "{{ nsswitch_module }}.yml"
+
+# NSS and PAM configuration
+# these should be the last tasks!
+#-----------------------------------------------------------------------
+
+- name: Create nsswitch.conf
+  template: src="nsswitch.conf.j2" dest="/etc/nsswitch.conf" owner=root group=root mode=0644
+
+- name: Install PAM config files from {{ nsswitch_module }}/
+  copy:
+    src: "{{ nsswitch_module }}/{{ item }}"
+    dest: "/etc/pam.d/{{ item }}"
+    owner: root
+    group: root
+    mode: 0644
+  with_items:
+  - common-account
+  - common-auth
+  - common-password
+  - common-session
+  - common-session-noninteractive
+
