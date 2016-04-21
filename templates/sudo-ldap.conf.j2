@@ -16,6 +16,6 @@ deref never
 tls_cacert	{{ ldap_cacert_pathname }}
 
 binddn host={{ ansible_fqdn }},ou=ae-dir
-bindpw YUh4btOPDQX4AQNpLcTvBgob
+bindpw {{ ldap_host_password }}
 
 sudoers_debug 0
