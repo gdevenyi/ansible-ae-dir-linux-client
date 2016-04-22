@@ -15,7 +15,7 @@ deref never
 # TLS certificates (needed for GnuTLS)
 tls_cacert	{{ ldap_cacert_pathname }}
 
-binddn host={{ ansible_fqdn }},ou=ae-dir
+binddn host={{ inventory_hostname }},ou=ae-dir
 bindpw {{ ldap_host_password }}
 
 sudoers_debug 0

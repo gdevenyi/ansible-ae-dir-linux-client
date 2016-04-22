@@ -68,7 +68,7 @@ ldap_uri = {% for uri in ldap_uris %}{{ uri }},{% endfor %}
 ldap_backup_uri = {% for uri in ldap_backup_uris %}{{ uri }},{% endfor %}
 
 # For server authentication
-ldap_default_bind_dn = host={{ ansible_fqdn }},ou=ae-dir
+ldap_default_bind_dn = host={{ inventory_hostname }},ou=ae-dir
 ldap_default_authtok = {{ ldap_host_password }}
 
 ldap_search_base = ou=ae-dir

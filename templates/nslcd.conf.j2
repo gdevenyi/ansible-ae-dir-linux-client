@@ -28,7 +28,7 @@ deref never
 referrals no
 
 # The DN to bind with for normal lookups.
-binddn host={{ ansible_fqdn }},ou=ae-dir
+binddn host={{ inventory_hostname }},ou=ae-dir
 bindpw {{ ldap_host_password }}
 
 # The DN used for password modifications by root.
