@@ -12,7 +12,7 @@ sizelimit	12
 timelimit	15
 deref never
 
-# TLS certificates (needed for GnuTLS)
+# TLS certificates
 tls_cacert	{{ ldap_cacert_pathname }}
 
 binddn host={{ inventory_hostname }},ou=ae-dir
