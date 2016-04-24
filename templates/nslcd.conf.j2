@@ -15,7 +15,7 @@ log syslog info
 ldap_version 3
 
 # The location at which the LDAP server(s) should be reachable.
-uri {% for uri in ldap_uris %}{{ uri }} {% endfor %}{% for uri in ldap_backup_uris %}{{ uri }} {% endfor %}
+uri {{ ldap_uris|join(' ') }} {{ ldap_backup_uris|join(' ') }}
 
 # The search base that will be used for all queries.
 base ou=ae-dir

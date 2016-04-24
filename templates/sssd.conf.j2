@@ -63,9 +63,8 @@ ldap_tls_cacert = {{ ldap_cacert_pathname }}
 ldap_auth_use_start_tls = True
 ldap_id_use_start_tls = True
 
-ldap_uri = {% for uri in ldap_uris %}{{ uri }},{% endfor %}
-
-ldap_backup_uri = {% for uri in ldap_backup_uris %}{{ uri }},{% endfor %}
+ldap_uri = {{ ldap_uris|join(',') }}
+ldap_backup_uri = {{ ldap_backup_uris|join(',') }}
 
 # For server authentication
 ldap_default_bind_dn = host={{ inventory_hostname }},ou=ae-dir
