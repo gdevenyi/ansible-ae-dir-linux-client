@@ -6,16 +6,17 @@
 
 base ou=ae-dir
 sudoers_base ou=ae-dir
-uri	{% for uri in ldap_uris %}{{ uri }} {% endfor %}{% for uri in ldap_backup_uris %}{{ uri }} {% endfor %}
+uri {% for uri in ldap_uris %}{{ uri }} {% endfor %}{% for uri in ldap_backup_uris %}{{ uri }} {% endfor %}
 
-sizelimit	12
-timelimit	15
+sizelimit 50
+timelimit 15
 deref never
 
 # TLS certificates
-tls_cacert	{{ ldap_cacert_pathname }}
+tls_cacert {{ ldap_cacert_pathname }}
 
 binddn host={{ inventory_hostname }},ou=ae-dir
 bindpw {{ ldap_host_password }}
 
+# Handy for debugging but set to 0 in production!
 sudoers_debug 0
