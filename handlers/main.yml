@@ -9,6 +9,9 @@
   service: name="{{ nslcd_package_name }}" state=restarted
   when: nsswitch_module=="ldap"
 
+- name: restart nscd
+  service: name=nscd state=restarted
+
 - name: restart ssh
   service: name=ssh state=restarted
 

@@ -1,7 +1,7 @@
 # (py)nslcd aka nss-pam-ldapd
 #-----------------------------------------------------------------------
 
-- name: "Install {{ nslcd_package_name }}"
+- name: "Install packages for {{ nslcd_package_name }}"
   apt:
     name: "{{ item }}"
     state: installed
@@ -14,7 +14,7 @@
     - libpam-ldapd
     - libnss-ldapd
 
-- name: Create nslcd.conf
+- name: "Create {{ nslcd_conf_file }}"
   template:
     src: "nslcd.conf.j2"
     dest: "{{ nslcd_conf_file }}"
@@ -23,6 +23,16 @@
     mode: 0600
   notify:
   - restart "{{ nslcd_package_name }}"
+
+- name: "Create {{ nscd_conf_file }}"
+  template:
+    src: "nscd.conf.j2"
+    dest: "{{ nscd_conf_file }}"
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+  - restart nscd
 
 - name: ensure "{{ nslcd_package_name }}" is running (and enable it at boot)
   service: name="{{ nslcd_package_name }}" state=started enabled=yes
