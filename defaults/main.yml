@@ -29,6 +29,8 @@ nslcd_package_name: nslcd
 nslcd_conf_dir: /etc
 nslcd_conf_file: "{{ nslcd_conf_dir }}/nslcd.conf"
 
+# File name of emergency authorized keys for user root
+ssh_emergency_root_keys: "ssh_emergency_root_keys"
 
 # LDAP search filter for PAM authorization
 #-----------------------------------------

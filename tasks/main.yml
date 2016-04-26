@@ -57,7 +57,7 @@
 
 - name: Install SSH emergency root keys
   copy:
-    src: "ssh_emergency_root_keys"
+    src: "{{ ssh_emergency_root_keys }}"
     dest: "/etc/ssh/authorized_keys/root"
     owner: root
     group: root
@@ -78,13 +78,14 @@
     search_ssh_config: "{{ nslcd_conf_file }}"
     when: nsswitch_module == 'ldap'
 
-- name: Run SSH key grabber script as CRON job
+- name: Enable SSH key grabber script as CRON job
   cron:
     name: "search_authorized_keys"
+    state: present
     user: root
     cron_file: search_authorized_keys
-    minute: "*/4"
-    job: "/usr/local/sbin/search_authorized_keys.py {{ search_ssh_config }} /etc/ssh/authorized_keys /etc/ssh/ignore_user_keys"
+    minute: "*/1"
+    job: "DEBUG=yes /usr/local/sbin/search_authorized_keys.py {{ search_ssh_config }} /etc/ssh/authorized_keys /etc/ssh/ignore_user_keys"
 
 - name: Install sshd_config
   template:
