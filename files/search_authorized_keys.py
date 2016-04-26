@@ -61,7 +61,7 @@ USE_MEMBEROF = 1
 EXPECTED_KEYS_MINCOUNT = 1
 
 # Base filter for searching entries with attribute 'sshPublicKey'
-USER_ENTRY_BASE_FILTER_TMPL = '(&(objectClass=ldapPublicKey)(aeStatus=0)(sshPublicKey=*)%s(|%s))'
+USER_ENTRY_BASE_FILTER_TMPL = '(&(objectClass=ldapPublicKey)(sshPublicKey=*)%s(|%s))'
 
 # 1. LDAP filter part to use for searching for user entries
 # 2. Time in seconds after which a password is no longer valid (password expiry)
