@@ -34,6 +34,9 @@ nscd_conf_file: "/etc/nscd.conf"
 # File name of emergency authorized keys for user root
 ssh_emergency_root_keys: "ssh_emergency_root_keys"
 
+# search for SSH public keys every n minutes
+search_authorized_keys_minutes: 4
+
 # LDAP search filter for PAM authorization
 #-----------------------------------------
 # note that AE-DIR already does this implicit via visibility of aeUser entries

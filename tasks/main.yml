@@ -84,8 +84,8 @@
     state: present
     user: root
     cron_file: search_authorized_keys
-    minute: "*/1"
-    job: "DEBUG=yes /usr/local/sbin/search_authorized_keys.py {{ search_ssh_config }} /etc/ssh/authorized_keys /etc/ssh/ignore_user_keys"
+    minute: "*/{{ search_authorized_keys_minutes }}"
+    job: "/usr/local/sbin/search_authorized_keys.py {{ search_ssh_config }} /etc/ssh/authorized_keys /etc/ssh/ignore_user_keys"
 
 - name: Install sshd_config
   template:
