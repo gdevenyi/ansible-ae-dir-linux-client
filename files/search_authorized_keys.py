@@ -424,7 +424,7 @@ def main():
                 ssh_login_group_entries = ldap_srvgrp_entry.get('aeLoginGroups', [])
                 if ssh_login_group_entries:
                     my_logger.debug(
-                        'Found %d groups referenced (aeLoginGroups) by server group %s',
+                        'Found %d group(s) referenced (aeLoginGroups) by server group %s',
                         len(ssh_login_group_entries),
                         repr(ldap_srvgrp_dn),
                     )
