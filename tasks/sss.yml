@@ -12,17 +12,14 @@
   notify:
   - restart sssd
   with_items:
-  - sssd
-  - sssd-proxy
-  - sssd-ad
-  - sssd-krb5
-  - sssd-krb5
+  - sssd-common
   - sssd-ldap
-  - sssd-ipa
+  - sssd-krb5-common
+  - python-sss
   - libnss-sss
   - libpam-sss
   - libsss-sudo
-
+ 
 - name: Create sssd.conf
   template:
     src: "sssd.conf.j2"
