@@ -18,7 +18,7 @@ ldap_version 3
 uri {{ ldap_uris|join(' ') }} {{ ldap_backup_uris|join(' ') }}
 
 # The search base that will be used for all queries.
-base ou=ae-dir
+base {{ ldap_suffix }}
 # The search scope.
 scope sub
 
@@ -28,7 +28,7 @@ deref never
 referrals no
 
 # The DN to bind with for normal lookups.
-binddn host={{ inventory_hostname }},ou=ae-dir
+binddn host={{ inventory_hostname }},{{ ldap_suffix }}
 bindpw {{ ldap_host_password }}
 
 # The DN used for password modifications by root.

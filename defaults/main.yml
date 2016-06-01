@@ -10,6 +10,9 @@ ldap_uris: []
 # LDAPS URIs of backup AE-DIR servers (e.g. in other data center)
 ldap_backup_uris: []
 
+# search base to use
+ldap_suffix: "ou=ae-dir"
+
 # TLS files
 ldap_cacert_filename: cacert.pem
 ldap_cacert_pathname: "/etc/ssl/certs/{{ ldap_cacert_filename }}"

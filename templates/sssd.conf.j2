@@ -67,10 +67,10 @@ ldap_uri = {{ ldap_uris|join(',') }}
 ldap_backup_uri = {{ ldap_backup_uris|join(',') }}
 
 # For server authentication
-ldap_default_bind_dn = host={{ inventory_hostname }},ou=ae-dir
+ldap_default_bind_dn = host={{ inventory_hostname }},{{ ldap_suffix }}
 ldap_default_authtok = {{ ldap_host_password }}
 
-ldap_search_base = ou=ae-dir
+ldap_search_base = {{ ldap_suffix }}
 
 ldap_schema = rfc2307bis
 

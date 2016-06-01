@@ -4,8 +4,8 @@
 #
 # See ldap.conf(5) and sudoers.ldap(5) for details
 
-base ou=ae-dir
-sudoers_base ou=ae-dir
+base {{ ldap_suffix }}
+sudoers_base {{ ldap_suffix }}
 uri {{ ldap_uris|join(' ') }} {{ ldap_backup_uris|join(' ') }}
 
 sizelimit 50
@@ -15,7 +15,7 @@ deref never
 # TLS certificates
 tls_cacert {{ ldap_cacert_pathname }}
 
-binddn host={{ inventory_hostname }},ou=ae-dir
+binddn host={{ inventory_hostname }},{{ ldap_suffix }}
 bindpw {{ ldap_host_password }}
 
 # Handy for debugging but set to 0 in production!
