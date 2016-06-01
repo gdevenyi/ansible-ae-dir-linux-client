@@ -1,7 +1,7 @@
 # sssd
 #-----------------------------------------------------------------------
 
-- name: Install sssd, PAM/NSS and LDAP backend packages
+- name: Install sssd-ldap, PAM/NSS and LDAP backend packages
   apt:
     name: "{{ item }}"
     state: installed
