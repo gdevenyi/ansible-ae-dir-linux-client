@@ -3,6 +3,9 @@
 # see sssd-ldap(5)
 
 [sssd]
+
+debug_level = 3
+
 config_file_version = 2
 services = nss, pam, ssh, sudo
 
@@ -18,6 +21,7 @@ create_homedir = true
 
 
 [nss]
+
 filter_groups = root
 filter_users = root
 reconnection_retries = 3
@@ -25,7 +29,7 @@ reconnection_retries = 3
 
 [pam]
 
-pam_verbosity = 1
+pam_verbosity = 3
 
 offline_credentials_expiration = 3 # days
 offline_failed_login_attempts = 6
@@ -34,19 +38,22 @@ offline_failed_login_delay = 2 # minutes
 
 [sudo]
 
+debug_level = 3
+
 sudo_timed = true
 
 
 [domain/AE-DIR]
 
-debug_level = 5
+debug_level = 3
 
 id_provider = ldap
 auth_provider = ldap
+sudo_provider = ldap
 
 # Lower and upper bounds for the IDs
-min_id = 10000
-#max_id = 65535
+min_id = {{ ldap_min_uid }}
+max_id = {{ ldap_max_uid }}
 
 entry_cache_timeout = 2400
 refresh_expired_interval = 1800
@@ -72,8 +79,10 @@ ldap_default_authtok = {{ ldap_host_password }}
 
 ldap_search_base = {{ ldap_suffix }}
 
+# some schema configuration
 ldap_schema = rfc2307bis
-
+ldap_user_uuid = entryUUID
+ldap_group_uuid = entryUUID
 ldap_user_object_class = posixAccount
 ldap_group_object_class = posixGroup
 
@@ -86,10 +95,11 @@ ldap_user_ssh_public_key = sshPublicKey
 
 ldap_purge_cache_timeout = 3
 
+ldap_sudo_search_base = {{ ldap_suffix }}
 ldap_sudo_use_host_filter = false
 ldap_sudo_include_netgroups = false
 ldap_sudo_smart_refresh_interval = 30
-ldap_sudo_full_refresh_interval = 600
+ldap_sudo_full_refresh_interval = 3600
 
 # We don't have multiple alias names for IDs
 # => always use cache for ID->name lookup

@@ -13,6 +13,10 @@ ldap_backup_uris: []
 # search base to use
 ldap_suffix: "ou=ae-dir"
 
+# POSIX-UID number range served by LDAP server
+ldap_min_uid: 30000
+ldap_max_uid: 65000
+
 # TLS files
 ldap_cacert_filename: cacert.pem
 ldap_cacert_pathname: "/etc/ssl/certs/{{ ldap_cacert_filename }}"
