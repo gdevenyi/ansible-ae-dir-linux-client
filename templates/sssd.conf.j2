@@ -73,7 +73,7 @@ ldap_id_use_start_tls = True
 ldap_uri = {{ ldap_uris|join(',') }}
 ldap_backup_uri = {{ ldap_backup_uris|join(',') }}
 
-# For server authentication
+# For host authentication
 ldap_default_bind_dn = host={{ inventory_hostname }},{{ ldap_suffix }}
 ldap_default_authtok = {{ ldap_host_password }}
 
@@ -89,6 +89,14 @@ ldap_group_object_class = posixGroup
 # avoid protocol incompatibilities with newer sssd versions by disabling deref:
 ldap_deref_threshold = 1
 
+# minimum security strength factor (SSF)
+ldap_sasl_minssf = 128
+
+# disable unneeded AD-specific LDAP extensions
+ldap_disable_paging = true
+ldap_disable_range_retrieval = true
+
+# posixAccount attribute mappings
 ldap_user_home_directory = homeDirectory
 ldap_user_shell = loginShell
 ldap_user_ssh_public_key = sshPublicKey
