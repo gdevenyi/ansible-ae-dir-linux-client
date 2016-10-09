@@ -1,8 +1,8 @@
 ---
 # tasks file for roles/ae-linux-login
 
-- name: "Package repository configuration for platform {{ ansible_os_family }}"
-  include: "{{ ansible_os_family }}-repo.yml"
+- name: "Package repository configuration for platform {{ ansible_lsb.id }}"
+  include: "{{ ansible_lsb.id }}-repo.yml"
 
 # python-ldap
 #-----------------------------------------------------------------------

@@ -2,7 +2,7 @@
 
 - name: Install apt-get preferences for Debian testing repository
   copy:
-    src: "{{ ansible_os_family }}/apt_testing.pref"
+    src: "{{ ansible_lsb.id }}/apt_testing.pref"
     dest: /etc/apt/preferences.d/testing.pref
     owner: root
     group: root
