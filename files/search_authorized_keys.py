@@ -364,6 +364,10 @@ def main():
             ldap_conn.set_option(ldap.OPT_REFERRALS, 0)
             # Switch of automatic alias dereferencing
             ldap_conn.set_option(ldap.OPT_DEREF, ldap.DEREF_NEVER)
+            # Use StartTLS ext.op. if necessary
+            if ldap_conn_uri.lower().startswith('ldap://'):
+                my_logger.debug('Send StartTLS ext.op.')
+                ldap_conn.start_tls_s()
             # Now send bind request which really opens the connection
             if sasl_mech == 'EXTERNAL':
                 # SASL/EXTERNAL bind to LDAP server (SSL client authc)
