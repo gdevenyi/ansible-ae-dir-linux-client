@@ -1,0 +1,24 @@
+---
+
+- name: Install sssd-ldap, PAM/NSS and LDAP backend packages
+  apt:
+    name: "{{ item }}"
+    state: installed
+    install_recommends: no
+    update_cache: yes
+    cache_valid_time: 8
+    dpkg_options: 'force-confold,force-confdef'
+  notify:
+  - restart sssd
+  with_items:
+  - sssd-common
+  - sssd-ldap
+  - sssd-krb5-common
+  - python-sss
+  - libnss-sss
+  - libpam-sss
+  - libsss-sudo
+ 
+- name: Install normal sudo
+  apt: name=sudo state=installed install_recommends=no dpkg_options='force-confold,force-confdef'
+

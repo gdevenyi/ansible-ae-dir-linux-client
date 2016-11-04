@@ -1,3 +1,4 @@
+---
 # Debian testing has more recent and better releases
 
 - name: Install apt-get preferences for Debian testing repository

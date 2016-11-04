@@ -44,6 +44,16 @@ ssh_emergency_root_keys: "ssh_emergency_root_keys"
 # search for SSH public keys every n minutes
 search_authorized_keys_minutes: 4
 
+# map OS to SSH demon service name
+sshd_service_name:
+  Debian: "ssh"
+  openSUSE: "sshd"
+
+# map NSS module to config pathname used by search_authorized_keys.py
+search_ssh_config:
+  sss: "{{ sssd_conf_file }}"
+  ldap: "{{ nslcd_conf_file }}"
+
 # LDAP search filter for PAM authorization
 #-----------------------------------------
 # note that AE-DIR already does this implicit via visibility of aeUser entries

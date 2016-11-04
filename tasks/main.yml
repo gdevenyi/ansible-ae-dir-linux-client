@@ -2,21 +2,13 @@
 # tasks file for roles/ae-linux-login
 
 - name: "Package repository configuration for platform {{ ansible_lsb.id }}"
-  include: "{{ ansible_lsb.id }}-repo.yml"
+  include: "repo-{{ ansible_lsb.id }}.yml"
 
 # python-ldap
 #-----------------------------------------------------------------------
 
-- name: Install python-ldap and pyasn1 modules
-  apt:
-    name: "{{ item }}"
-    state: installed
-    install_recommends: no
-    dpkg_options: 'force-confold,force-confdef'
-  with_items:
-  - python-ldap
-  - python-pyasn1
-  - python-pyasn1-modules
+- name: "python-ldap packages for platform {{ ansible_lsb.id }}"
+  include: "pyldap-{{ ansible_lsb.id }}.yml"
 
 # TLS files
 #-----------------------------------------------------------------------
@@ -71,13 +63,6 @@
     group: root
     mode: 0700
 
-- set_fact:
-    search_ssh_config: "{{ sssd_conf_file }}"
-    when: nsswitch_module == 'sss'
-- set_fact:
-    search_ssh_config: "{{ nslcd_conf_file }}"
-    when: nsswitch_module == 'ldap'
-
 - name: Enable SSH key grabber script as CRON job
   cron:
     name: "search_authorized_keys"
@@ -85,7 +70,7 @@
     user: root
     cron_file: search_authorized_keys
     minute: "*/{{ search_authorized_keys_minutes }}"
-    job: "/usr/local/sbin/search_authorized_keys.py {{ search_ssh_config }} /etc/ssh/authorized_keys /etc/ssh/ignore_user_keys"
+    job: "/usr/local/sbin/search_authorized_keys.py {{ search_ssh_config[nsswitch_module] }} /etc/ssh/authorized_keys /etc/ssh/ignore_user_keys"
 
 - name: Install sshd_config
   template:
@@ -94,10 +79,10 @@
     owner: root
     group: root
     mode: 0644
-  notify: restart ssh
+  notify: restart sshd
 
-- name: ensure SSH demon is running (and enable it at boot)
-  service: name=ssh state=started enabled=yes
+- name: "ensure SSH demon is running and enabled"
+  service: name="{{ sshd_service_name[ansible_lsb.id] }}" state=started enabled=yes
 
 # Install a NSS/PAM caching demon
 #-----------------------------------------------------------------------

@@ -1,0 +1,12 @@
+---
+
+- name: Install python-ldap and pyasn1 modules
+  zypper:
+    name: "{{ item }}"
+    state: latest
+    disable_recommends: yes
+    type: package
+  with_items:
+  - python-ldap
+  - python-pyasn1
+  - python-pyasn1-modules

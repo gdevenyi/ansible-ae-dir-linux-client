@@ -1,0 +1,12 @@
+---
+
+- name: Install python-ldap and pyasn1 modules
+  apt:
+    name: "{{ item }}"
+    state: installed
+    install_recommends: no
+    dpkg_options: 'force-confold,force-confdef'
+  with_items:
+  - python-ldap
+  - python-pyasn1
+  - python-pyasn1-modules
