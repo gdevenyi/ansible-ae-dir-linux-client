@@ -70,8 +70,9 @@ cache_credentials = true
 ldap_disable_paging = yes
 
 ldap_tls_cacert = {{ ldap_cacert_pathname }}
-ldap_auth_use_start_tls = True
-ldap_id_use_start_tls = True
+
+# StartTLS ext. op. is not used because LDAPI or LDAPS is used
+ldap_id_use_start_tls = false
 
 ldap_uri = {{ ldap_uris|join(',') }}
 ldap_backup_uri = {{ ldap_backup_uris|join(',') }}
