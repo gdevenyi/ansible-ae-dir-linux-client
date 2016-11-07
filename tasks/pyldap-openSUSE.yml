@@ -7,6 +7,7 @@
     disable_recommends: yes
     type: package
   with_items:
+  - cyrus-sasl
   - python-ldap
   - python-pyasn1
   - python-pyasn1-modules
