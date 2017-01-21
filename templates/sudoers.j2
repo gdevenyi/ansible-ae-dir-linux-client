@@ -1,0 +1,20 @@
+# {{ ansible_managed }}
+#
+# You must add local content in /etc/sudoers.d/ instead of
+# directly modifying this file.
+#
+Defaults        env_reset
+Defaults        mail_badpass
+Defaults        secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+# Host alias specification
+
+# User alias specification
+
+# Cmnd alias specification
+
+# User privilege specification
+root    ALL=(ALL:ALL) ALL
+
+# See sudoers(5) for more information on "#include" directives:
+#includedir /etc/sudoers.d

@@ -1,0 +1,17 @@
+---
+# (py)nslcd aka nss-pam-ldapd
+#-----------------------------------------------------------------------
+
+- name: "Install packages for {{ nslcd_package_name }} on {{ ansible_lsb.id }}"
+  apt:
+    name: "{{ item }}"
+    state: installed
+    install_recommends: no
+    update_cache: yes
+    dpkg_options: 'force-confold,force-confdef'
+  with_items:
+    - "{{ nslcd_package_name }}"
+    - nscd
+    - libpam-ldapd
+    - libnss-ldapd
+    - sudo-ldap

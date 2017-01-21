@@ -1,0 +1,14 @@
+---
+# (py)nslcd aka nss-pam-ldapd
+#-----------------------------------------------------------------------
+
+- name: "Install packages for {{ nslcd_package_name }} on {{ ansible_lsb.id }}"
+  zypper:
+    name: "{{ item }}"
+    state: present
+    disable_recommends: yes
+    type: package
+  with_items:
+    - nss-pam-ldapd
+    - nscd
+    - sudo

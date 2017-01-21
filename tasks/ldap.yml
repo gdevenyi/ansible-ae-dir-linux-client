@@ -2,18 +2,8 @@
 # (py)nslcd aka nss-pam-ldapd
 #-----------------------------------------------------------------------
 
-- name: "Install packages for {{ nslcd_package_name }}"
-  apt:
-    name: "{{ item }}"
-    state: installed
-    install_recommends: no
-    update_cache: yes
-    dpkg_options: 'force-confold,force-confdef'
-  with_items:
-    - "{{ nslcd_package_name }}"
-    - nscd
-    - libpam-ldapd
-    - libnss-ldapd
+- name: "Install packages for {{ nslcd_package_name }} on {{ ansible_lsb.id }}"
+  include: "ldap-{{ ansible_lsb.id }}.yml"
 
 - name: "Create {{ nslcd_conf_file }}"
   template:
@@ -41,12 +31,5 @@
 - name: ensure nscd is running (and enable it at boot)
   service: name=nscd state=started enabled=yes
 
-# sudo
-#-----------------------------------------------------------------------
-
-- name: Install sudo-ldap
-  apt: name=sudo-ldap state=installed install_recommends=no dpkg_options='force-confold,force-confdef'
-
-- name: Create sudo-ldap.conf
+- name: "Create sudo-ldap.conf"
   template: src="sudo-ldap.conf.j2" dest="/etc/sudo-ldap.conf" owner=root group=root mode=0600
-

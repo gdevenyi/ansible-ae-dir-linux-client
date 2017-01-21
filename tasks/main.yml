@@ -72,6 +72,16 @@
     minute: "*/{{ search_authorized_keys_minutes }}"
     job: "/usr/local/sbin/search_authorized_keys.py {{ search_ssh_config[nsswitch_module] }} /etc/ssh/authorized_keys /etc/ssh/ignore_user_keys"
 
+# Install a NSS/PAM caching demon
+#-----------------------------------------------------------------------
+
+- name: "Install caching demon for module {{ nsswitch_module }}"
+  include: "{{ nsswitch_module }}.yml"
+
+# sshd, NSS and PAM configuration
+# these should be the last tasks!
+#-----------------------------------------------------------------------
+
 - name: Install sshd_config
   template:
     src: "sshd_config.j2"
@@ -82,20 +92,15 @@
   notify: restart sshd
 
 - name: "ensure SSH demon is running and enabled"
-  service: name="{{ sshd_service_name[ansible_lsb.id] }}" state=started enabled=yes
-
-# Install a NSS/PAM caching demon
-#-----------------------------------------------------------------------
-
-- name: "Install caching demon for module {{ nsswitch_module }}"
-  include: "{{ nsswitch_module }}.yml"
-
-# NSS and PAM configuration
-# these should be the last tasks!
-#-----------------------------------------------------------------------
+  service: name="{{ sshd_service_name }}" state=started enabled=yes
 
 - name: Create nsswitch.conf
-  template: src="nsswitch.conf.j2" dest="/etc/nsswitch.conf" owner=root group=root mode=0644
+  template:
+    src: "nsswitch.conf.j2"
+    dest: "/etc/nsswitch.conf"
+    owner: root
+    group: root
+    mode: 0644
 
 - name: "Install PAM config files from {{ nsswitch_module }}/"
   copy:
@@ -110,3 +115,11 @@
     - common-password
     - common-session
     - common-session-noninteractive
+
+- name: Install sudoers
+  template:
+    src: "sudoers.j2"
+    dest: "/etc/sudoers"
+    owner: root
+    group: root
+    mode: 0440

@@ -1,17 +1,17 @@
 ---
-# handlers file for roles/ae-linux-login
+# handlers file for roles/ae-dir-linux-client
 
 - name: restart sssd
   service: name=sssd state=restarted
-  when: nsswitch_module=="sss"
-
-- name: restart "{{ nslcd_package_name }}"
-  service: name="{{ nslcd_package_name }}" state=restarted
-  when: nsswitch_module=="ldap"
 
 - name: restart nscd
   service: name=nscd state=restarted
 
-- name: "restart sshd"
-  service: name="{{ sshd_service_name[ansible_lsb.id] }}" state=restarted
+- name: restart nslcd
+  service: name=nslcd state=restarted
 
+- name: "restart ssh"
+  service: name="ssh" state=restarted
+
+- name: "restart sshd"
+  service: name="sshd" state=restarted

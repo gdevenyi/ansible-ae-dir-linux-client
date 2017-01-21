@@ -18,8 +18,17 @@ ldap_min_uid: 30000
 ldap_max_uid: 65000
 
 # TLS files
-ldap_cacert_filename: cacert.pem
+ldap_cacert_filename: "cacert.pem"
 ldap_cacert_pathname: "/etc/ssl/certs/{{ ldap_cacert_filename }}"
+
+# nested dict of OS-specific vars
+os_vars:
+  Debian:
+    sshd_service_name: "ssh"
+    nslcd_package_name: "nslcd"
+  openSUSE:
+    sshd_service_name: "sshd"
+    nslcd_package_name: "nslcd"
 
 # which modules to use in /etc/nsswitch.conf
 nsswitch_module: "ldap"
@@ -28,14 +37,18 @@ nsswitch_group_module: "{{ nsswitch_module }}"
 nsswitch_sudoers_module: "{{ nsswitch_module }}"
 
 # Pathnames for sssd
-sssd_conf_dir: /etc/sssd
+sssd_conf_dir: "/etc/sssd"
 sssd_conf_file: "{{ sssd_conf_dir }}/sssd.conf"
 
 # Pathnames for (py)nslcd
-nslcd_package_name: nslcd
-nslcd_conf_dir: /etc
+nslcd_package_name: "{{ os_vars[ansible_lsb.id].nslcd_package_name }}"
+nslcd_conf_dir: "/etc"
 nslcd_conf_file: "{{ nslcd_conf_dir }}/nslcd.conf"
 
+# service name of SSH demon
+sshd_service_name: "{{ os_vars[ansible_lsb.id].sshd_service_name }}"
+
+# pathname of nscd configuration file
 nscd_conf_file: "/etc/nscd.conf"
 
 # File name of emergency authorized keys for user root
@@ -43,11 +56,6 @@ ssh_emergency_root_keys: "ssh_emergency_root_keys"
 
 # search for SSH public keys every n minutes
 search_authorized_keys_minutes: 4
-
-# map OS to SSH demon service name
-sshd_service_name:
-  Debian: "ssh"
-  openSUSE: "sshd"
 
 # map NSS module to config pathname used by search_authorized_keys.py
 search_ssh_config:
@@ -59,12 +67,12 @@ search_ssh_config:
 # note that AE-DIR already does this implicit via visibility of aeUser entries
 
 # allow only active users (not really necessary)
-pam_authz_search: '(&(objectClass=posixAccount)(uid=$username))'
+pam_authz_search: "(&(objectClass=posixAccount)(uid=$username)(|(pwdChangedTime=*)(userCertificate=*)(sshPublicKey=*)))"
 
 # Optional security:
 # Check known remote host in attribute 'aeRemoteHost' if attribute is present
-#pam_authz_search: '(&(objectClass=posixAccount)(uid=$username)(|(!(aeRemoteHost=*))(aeRemoteHost=$rhost)))'
+#pam_authz_search: "(&(objectClass=posixAccount)(uid=$username)(|(pwdChangedTime=*)(userCertificate=*)(sshPublicKey=*))(|(!(aeRemoteHost=*))(aeRemoteHost=$rhost)))"
 
 # High security:
-# Enforce known remote host in attribute 'aeRemoteHost' in any case
-#pam_authz_search: '(&(objectClass=posixAccount)(uid=$username)(aeRemoteHost=$rhost))'
+# Enforce known remote host in attribute "aeRemoteHost" in any case
+#pam_authz_search: "(&(objectClass=posixAccount)(uid=$username)(|(pwdChangedTime=*)(userCertificate=*)(sshPublicKey=*))(aeRemoteHost=$rhost))"
