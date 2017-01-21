@@ -31,9 +31,6 @@ referrals no
 binddn host={{ inventory_hostname }},{{ ldap_suffix }}
 bindpw {{ ldap_host_password }}
 
-# The DN used for password modifications by root.
-#rootpwmoddn cn=admin,dc=example,dc=com
-
 # SSL options
 #ssl on
 tls_reqcert demand
