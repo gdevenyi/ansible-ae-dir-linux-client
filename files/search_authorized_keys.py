@@ -9,7 +9,7 @@ Python 2.4.x+
 python-ldap 2.3.x+
 """
 
-__version__ = '0.10.0'
+__version__ = '0.11.0'
 
 #-----------------------------------------------------------------------
 # Imports
@@ -51,6 +51,10 @@ PYLDAP_TRACELEVEL = 0
 
 # Search base DN
 SEARCH_BASE = 'ou=ae-dir'
+
+# attribute containing valid remote host IP addresses used to generate the
+# key option from="pattern-list" (set to None to disable it)
+RHOST_ATTR = 'aeRemoteHost'
 
 # Whether to optimize search with memberOf filter
 USE_MEMBEROF = 1
@@ -406,7 +410,7 @@ def main():
                 repr(ldap_conn_uri),
                 repr(ldap_conn.whoami_s())
             )
-            
+
             break
 
     # Assume that the server group entry is the parent entry of own server entry
@@ -477,17 +481,24 @@ def main():
     )
 
     search_start_time = time.time()
-    my_logger.debug('Search users with filter %s', repr(ldap_filterstr))
+    user_attr_list = [
+        'cn',
+        'uid',
+        'sshPublicKey'
+    ]
+    if RHOST_ATTR:
+        user_attr_list.append(RHOST_ATTR)
+    my_logger.debug(
+        'Search users with filter %r, requested attributes %r',
+        ldap_filterstr,
+        user_attr_list,
+    )
     # Grab all LDAP entries with a single synchronous search
     all_entries = ldap_conn.search_s(
         SEARCH_BASE,
         ldap.SCOPE_SUBTREE,
         ldap_filterstr,
-        attrlist=[
-            'cn',
-            'uid',
-            'sshPublicKey'
-        ]
+        attrlist=user_attr_list,
     )
     search_end_time = time.time()
 
@@ -542,6 +553,19 @@ def main():
                 )
                 continue
 
+        if RHOST_ATTR and RHOST_ATTR in ldap_entry:
+            # FIX ME! Probably we should check for correct values!
+            my_logger.debug('attribute %r contains: %r', RHOST_ATTR, ldap_entry[RHOST_ATTR])
+            ssh_key_prefix = 'from="%s" ' % (','.join(ldap_entry[RHOST_ATTR]))
+        else:
+            ssh_key_prefix = ''
+        my_logger.debug('ssh_key_prefix = %r', ssh_key_prefix)
+
+        new_user_ssh_key = sorted([
+            ''.join((ssh_key_prefix, ssh_key.strip()))
+            for ssh_key in ldap_entry['sshPublicKey']
+        ])
+
         ssh_key_path_name = os.path.join(path_prefix, ldap_uid)
         try:
             old_user_ssh_key = open(ssh_key_path_name, 'rb').read().split('\n')
@@ -552,14 +576,10 @@ def main():
                 repr(log_username),
                 AUTHORIZED_KEY_MODE,
             )
-            open(ssh_key_path_name, 'wb').write(
-                '\n'.join(ldap_entry['sshPublicKey'])
-            )
+            open(ssh_key_path_name, 'wb').write(new_user_ssh_key)
             os.chmod(ssh_key_path_name, AUTHORIZED_KEY_MODE)
         else:
             old_user_ssh_key.sort()
-            new_user_ssh_key = ldap_entry['sshPublicKey']
-            new_user_ssh_key.sort()
             if old_user_ssh_key != new_user_ssh_key:
                 my_logger.info(
                     'Updating SSH key file %s for %s (mode=%04o)',
@@ -567,9 +587,9 @@ def main():
                     repr(log_username),
                     AUTHORIZED_KEY_MODE,
                 )
-                open(ssh_key_path_name, 'wb').write(
-                    '\n'.join(ldap_entry['sshPublicKey'])
-                )
+                ssh_file = open(ssh_key_path_name, 'wb')
+                ssh_file.write('\n'.join(new_user_ssh_key))
+                ssh_file.close()
                 os.chmod(ssh_key_path_name, AUTHORIZED_KEY_MODE)
             else:
                 my_logger.debug(
