@@ -14,6 +14,6 @@
   notify:
   - restart sssd
 
-- name: ensure sssd is running (and enable it at boot)
+- name: "ensure sssd is running"
   service: name=sssd state=started enabled=yes
 

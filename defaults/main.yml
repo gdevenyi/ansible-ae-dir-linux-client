@@ -66,13 +66,13 @@ search_ssh_config:
 #-----------------------------------------
 # note that AE-DIR already does this implicit via visibility of aeUser entries
 
-# allow only active users (not really necessary)
-pam_authz_search: "(&(objectClass=posixAccount)(uid=$username)(|(pwdChangedTime=*)(userCertificate=*)(sshPublicKey=*)))"
+# allow only active users with explicit login rights in AE-DIR
+#pam_authz_search: "(&(objectClass=posixAccount)(uid=$username)(|(pwdChangedTime=*)(userCertificate=*)(sshPublicKey=*)))"
 
 # Optional security:
-# Check known remote host in attribute 'aeRemoteHost' if attribute is present
-#pam_authz_search: "(&(objectClass=posixAccount)(uid=$username)(|(pwdChangedTime=*)(userCertificate=*)(sshPublicKey=*))(|(!(aeRemoteHost=*))(aeRemoteHost=$rhost)))"
+# Additionally check known remote host in attribute 'aeRemoteHost' if attribute is present
+pam_authz_search: "(&(objectClass=posixAccount)(uid=$username)(|(pwdChangedTime=*)(userCertificate=*)(sshPublicKey=*))(|(!(aeRemoteHost=*))(aeRemoteHost=$rhost)))"
 
 # High security:
-# Enforce known remote host in attribute "aeRemoteHost" in any case
+# Additionally Enforce known remote host in attribute "aeRemoteHost" in any case
 #pam_authz_search: "(&(objectClass=posixAccount)(uid=$username)(|(pwdChangedTime=*)(userCertificate=*)(sshPublicKey=*))(aeRemoteHost=$rhost))"

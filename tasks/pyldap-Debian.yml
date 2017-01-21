@@ -1,6 +1,6 @@
 ---
 
-- name: Install python-ldap and pyasn1 modules
+- name: "Install python-ldap and pyasn1 modules"
   apt:
     name: "{{ item }}"
     state: installed

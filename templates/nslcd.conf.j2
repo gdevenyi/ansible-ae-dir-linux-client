@@ -40,7 +40,7 @@ tls_reqcert demand
 tls_cacertfile {{ ldap_cacert_pathname }}
 
 # minimum UID or GID retrieved from LDAP server
-nss_min_uid 10000
+nss_min_uid {{ ldap_min_uid }}
 
 # no recursive lookup of nested groups
 nss_nested_groups no
@@ -52,4 +52,4 @@ nss_disable_enumeration no
 pam_password_prohibit_message "Changing password on systems is not allowed!"
 
 # Check the SSH client's hostname in user entry
-#pam_authz_search "{{ pam_authz_search }}"
+pam_authz_search {{ pam_authz_search }}

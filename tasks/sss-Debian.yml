@@ -1,6 +1,6 @@
 ---
 
-- name: Install sssd-ldap, PAM/NSS and LDAP backend packages
+- name: "Install sssd-ldap, PAM/NSS and LDAP backend packages"
   apt:
     name: "{{ item }}"
     state: installed
@@ -19,6 +19,5 @@
   - libpam-sss
   - libsss-sudo
  
-- name: Install normal sudo
+- name: "Install normal sudo"
   apt: name=sudo state=installed install_recommends=no dpkg_options='force-confold,force-confdef'
-

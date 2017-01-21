@@ -1,6 +1,6 @@
 ---
 
-- name: Install sssd-ldap, PAM/NSS, LDAP backend and sudo packages
+- name: "Install sssd-ldap, PAM/NSS, LDAP backend and sudo packages"
   zypper:
     name: "{{ item }}"
     state: latest

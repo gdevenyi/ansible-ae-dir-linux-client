@@ -13,7 +13,7 @@
     group: root
     mode: 0600
   notify:
-  - restart "{{ nslcd_package_name }}"
+  - "restart {{ nslcd_package_name }}"
 
 - name: "Create {{ nscd_conf_file }}"
   template:
@@ -25,10 +25,10 @@
   notify:
   - restart nscd
 
-- name: ensure "{{ nslcd_package_name }}" is running (and enable it at boot)
+- name: "ensure {{ nslcd_package_name }}"
   service: name="{{ nslcd_package_name }}" state=started enabled=yes
 
-- name: ensure nscd is running (and enable it at boot)
+- name: "ensure nscd is running"
   service: name=nscd state=started enabled=yes
 
 - name: "Create sudo-ldap.conf"
