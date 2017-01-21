@@ -5,6 +5,16 @@
 - name: "Install packages for {{ nslcd_package_name }} on {{ ansible_lsb.id }}"
   include: "ldap-{{ ansible_lsb.id }}.yml"
 
+- name: "CA certificate file"
+  copy:
+    src: "{{ ldap_cacert_filename }}"
+    dest: "{{ ldap_cacert_pathname }}"
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+  - "restart {{ nslcd_package_name }}"
+
 - name: "Create {{ nslcd_conf_file }}"
   template:
     src: "nslcd.conf.j2"

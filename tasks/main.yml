@@ -7,19 +7,6 @@
 - name: "python-ldap packages for platform {{ ansible_lsb.id }}"
   include: "pyldap-{{ ansible_lsb.id }}.yml"
 
-# TLS files
-#-----------------------------------------------------------------------
-
-- name: "CA certificate file"
-  copy:
-    src: "{{ ldap_cacert_filename }}"
-    dest: "{{ ldap_cacert_pathname }}"
-    owner: root
-    group: root
-    mode: 0644
-  notify:
-  - restart sssd
-
 # SSH authorized keys
 #-----------------------------------------------------------------------
 
