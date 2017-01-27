@@ -1,9 +1,6 @@
 ---
 # defaults file for roles/ae-linux-login
 
-# Hostname of debian repo server
-debian_repo_hostport: ftp.debian.org:80
-
 # LDAPS URIs of primary AE-DIR servers (e.g. in same data center)
 ldap_uris: []
 
