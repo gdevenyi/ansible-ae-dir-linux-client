@@ -2,7 +2,7 @@
 # (py)nslcd aka nss-pam-ldapd
 #-----------------------------------------------------------------------
 
-- name: "Install packages for {{ nslcd_package_name }} on {{ ansible_lsb.id }}"
+- name: "Install packages for {{ nslcd_package_name }} on {{ lsb_id }}"
   zypper:
     name: "{{ item }}"
     state: present

@@ -1,7 +1,7 @@
 ---
 # sssd
 
-- name: "Install caching demon for module {{ nsswitch_module }} on {{ ansible_lsb.id }}"
+- name: "Install caching demon for module {{ nsswitch_module }} on {{ lsb_id }}"
   include: "{{ nsswitch_module }}-{{ ansible_lsb.id }}.yml"
 
 - name: "CA certificate file"

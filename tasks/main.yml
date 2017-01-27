@@ -4,8 +4,8 @@
 # python-ldap
 #-----------------------------------------------------------------------
 
-- name: "python-ldap packages for platform {{ ansible_lsb.id }}"
-  include: "pyldap-{{ ansible_lsb.id }}.yml"
+- name: "python-ldap packages for platform {{ lsb_id }}"
+  include: "pyldap-{{ lsb_id }}.yml"
 
 # SSH authorized keys
 #-----------------------------------------------------------------------

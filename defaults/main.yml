@@ -1,6 +1,13 @@
 ---
 # defaults file for roles/ae-linux-login
 
+# map real LSB id to another LSB id to be used during plays
+lsb_id_map:
+  openSUSE: "SUSE"
+
+# LSB id to be used during plays
+lsb_id: "{{ lsb_id_map.get(ansible_lsb.id,ansible_lsb.id) }}"
+
 # LDAPS URIs of primary AE-DIR servers (e.g. in same data center)
 ldap_uris: []
 
@@ -38,12 +45,12 @@ sssd_conf_dir: "/etc/sssd"
 sssd_conf_file: "{{ sssd_conf_dir }}/sssd.conf"
 
 # Pathnames for (py)nslcd
-nslcd_package_name: "{{ os_vars[ansible_lsb.id].nslcd_package_name }}"
+nslcd_package_name: "{{ os_vars[lsb_id].nslcd_package_name }}"
 nslcd_conf_dir: "/etc"
 nslcd_conf_file: "{{ nslcd_conf_dir }}/nslcd.conf"
 
 # service name of SSH demon
-sshd_service_name: "{{ os_vars[ansible_lsb.id].sshd_service_name }}"
+sshd_service_name: "{{ os_vars[lsb_id].sshd_service_name }}"
 
 # pathname of nscd configuration file
 nscd_conf_file: "/etc/nscd.conf"
