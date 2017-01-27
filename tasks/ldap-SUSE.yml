@@ -10,5 +10,4 @@
     type: package
   with_items:
     - nss-pam-ldapd
-    - nscd
     - sudo

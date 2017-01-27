@@ -40,6 +40,9 @@ nsswitch_passwd_module: "{{ nsswitch_module }}"
 nsswitch_group_module: "{{ nsswitch_module }}"
 nsswitch_sudoers_module: "{{ nsswitch_module }}"
 
+# flag whether to enable nscd
+nscd_enabled: "{{ nsswitch_module=='ldap' }}"
+
 # Pathnames for sssd
 sssd_conf_dir: "/etc/sssd"
 sssd_conf_file: "{{ sssd_conf_dir }}/sssd.conf"

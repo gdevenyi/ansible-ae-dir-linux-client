@@ -1,0 +1,20 @@
+---
+# install, configure, enable nscd
+
+- name: "Install package nscd on {{ lsb_id }}"
+  package:
+    name: nscd
+
+- name: "Create {{ nscd_conf_file }}"
+  template:
+    src: "nscd.conf-{{ nsswitch_module }}.j2"
+    dest: "{{ nscd_conf_file }}"
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+  - restart nscd
+
+- name: "ensure nscd is running"
+  service: name=nscd state=started enabled=yes
+

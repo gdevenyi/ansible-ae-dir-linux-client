@@ -25,21 +25,8 @@
   notify:
   - "restart {{ nslcd_package_name }}"
 
-- name: "Create {{ nscd_conf_file }}"
-  template:
-    src: "nscd.conf.j2"
-    dest: "{{ nscd_conf_file }}"
-    owner: root
-    group: root
-    mode: 0644
-  notify:
-  - restart nscd
-
 - name: "ensure {{ nslcd_package_name }}"
   service: name="{{ nslcd_package_name }}" state=started enabled=yes
-
-- name: "ensure nscd is running"
-  service: name=nscd state=started enabled=yes
 
 - name: "Create sudo-ldap.conf"
   template: src="sudo-ldap.conf.j2" dest="/etc/sudo-ldap.conf" owner=root group=root mode=0600

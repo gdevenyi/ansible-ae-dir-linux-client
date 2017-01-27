@@ -11,7 +11,6 @@
     dpkg_options: 'force-confold,force-confdef'
   with_items:
     - "{{ nslcd_package_name }}"
-    - nscd
     - libpam-ldapd
     - libnss-ldapd
     - sudo-ldap
