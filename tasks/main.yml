@@ -78,6 +78,7 @@
     owner: root
     group: root
     mode: 0644
+    validate: "/usr/sbin/sshd -t -f %s"
   notify: restart sshd
 
 - name: "ensure SSH demon is running"
