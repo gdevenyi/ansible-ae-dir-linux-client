@@ -93,8 +93,8 @@
     mode: 0644
 
 - name: "Install PAM config files from {{ nsswitch_module }}/"
-  copy:
-    src: "{{ nsswitch_module }}/{{ item }}"
+  template:
+    src: "{{ nsswitch_module }}/{{ item }}.j2"
     dest: "/etc/pam.d/{{ item }}"
     owner: root
     group: root
