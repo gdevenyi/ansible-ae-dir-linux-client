@@ -80,6 +80,7 @@ ldap_backup_uri = {{ ldap_backup_uris|join(',') }}
 # For host authentication
 ldap_default_bind_dn = host={{ inventory_hostname }},{{ ldap_suffix }}
 ldap_default_authtok = {{ ldap_host_password }}
+ldap_default_authtok_type = password
 
 ldap_search_base = {{ ldap_suffix }}
 
