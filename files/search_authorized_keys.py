@@ -9,7 +9,7 @@ Python 2.4.x+
 python-ldap 2.3.x+
 """
 
-__version__ = '0.11.0'
+__version__ = '0.12.0'
 
 #-----------------------------------------------------------------------
 # Imports
@@ -48,9 +48,6 @@ AUTHORIZED_KEY_MODE = 0644
 
 # Trace level for python-ldap logs
 PYLDAP_TRACELEVEL = 0
-
-# Search base DN
-SEARCH_BASE = 'ou=ae-dir'
 
 # attribute containing valid remote host IP addresses used to generate the
 # key option from="pattern-list" (set to None to disable it)
@@ -149,6 +146,7 @@ def parse_config_file(config_filename):
     else:
         sep = ' '
     uri_list = []
+    search_base = ''
     who = None
     cred = None
     sasl_mech = None
@@ -166,13 +164,15 @@ def parse_config_file(config_filename):
         elif key == 'uri':
             # assume space-separated list in sssd.conf
             uri_list = split_uri_list(value, ' ')
+        elif key == 'ldap_search_base' or key == 'base':
+            search_base = value
         elif key == 'ldap_default_bind_dn' or key == 'binddn':
             who = value
         elif key == 'ldap_default_authtok' or key == 'bindpw':
             cred = value
         elif key == 'ldap_tls_cacert' or key == 'tls_cacertfile':
             cacert_filename = value
-    return (uri_list, who, cred, sasl_mech, cacert_filename)
+    return (uri_list, search_base, who, cred, sasl_mech, cacert_filename)
 
 #-----------------------------------------------------------------------
 # Main...
@@ -250,7 +250,7 @@ def main():
 
     my_logger.debug('Reading config file: %s', repr(config_filename))
     try:
-        uri_list, who, cred, sasl_mech, cacert_filename = parse_config_file(config_filename)
+        uri_list, search_base, who, cred, sasl_mech, cacert_filename = parse_config_file(config_filename)
     except CATCH_ALL_EXCEPTION, e:
         my_logger.critical(
             'Abort: Error reading config file %s: %s',
@@ -259,9 +259,23 @@ def main():
         )
         sys.exit(1)
     else:
+        my_logger.debug(
+            'parse_config_file() returned: uri_list=%r search_base=%r who=%r sasl_mech=%r cacert_filename=%r',
+            uri_list,
+            search_base,
+            who,
+            sasl_mech,
+            cacert_filename,
+        )
         if not uri_list:
             my_logger.critical(
                 'Abort: No LDAP URIs found in config file %s',
+                repr(config_filename),
+            )
+            sys.exit(1)
+        if not search_base:
+            my_logger.critical(
+                'Abort: No search base found in config file %s',
                 repr(config_filename),
             )
             sys.exit(1)
@@ -495,7 +509,7 @@ def main():
     )
     # Grab all LDAP entries with a single synchronous search
     all_entries = ldap_conn.search_s(
-        SEARCH_BASE,
+        search_base,
         ldap.SCOPE_SUBTREE,
         ldap_filterstr,
         attrlist=user_attr_list,
