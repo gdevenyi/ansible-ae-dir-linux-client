@@ -9,7 +9,7 @@ Python 2.4.x+
 python-ldap 2.3.x+
 """
 
-__version__ = '0.12.0'
+__version__ = '0.13.0'
 
 #-----------------------------------------------------------------------
 # Imports
@@ -121,6 +121,16 @@ class MyLDAPUrl(ldapurl.LDAPUrl):
     }
 
 
+def write_ssh_file(ssh_key_path_name, new_user_ssh_keys):
+    """
+    write list of SSH keys into file
+    """
+    ssh_file = open(ssh_key_path_name, 'wb')
+    ssh_file.write('\n'.join(new_user_ssh_keys))
+    ssh_file.close()
+    os.chmod(ssh_key_path_name, AUTHORIZED_KEY_MODE)
+
+
 def parse_config_file(config_filename):
     """
     Parse sssd.conf or ldap.conf for extracting
@@ -153,7 +163,7 @@ def parse_config_file(config_filename):
     cacert_filename = None
     for line in config_file.readlines():
         try:
-            key, value = line.strip().replace('\t',' ').split(sep, 1)
+            key, value = line.strip().replace('\t', ' ').split(sep, 1)
         except (IndexError, ValueError):
             key, value = '', ''
         key = key.strip().lower()
@@ -250,17 +260,21 @@ def main():
 
     my_logger.debug('Reading config file: %s', repr(config_filename))
     try:
-        uri_list, search_base, who, cred, sasl_mech, cacert_filename = parse_config_file(config_filename)
-    except CATCH_ALL_EXCEPTION, e:
+        uri_list, search_base, who, cred, sasl_mech, cacert_filename = \
+            parse_config_file(config_filename)
+    except CATCH_ALL_EXCEPTION, err:
         my_logger.critical(
-            'Abort: Error reading config file %s: %s',
-            repr(config_filename),
-            str(e),
+            'Abort: Error reading config file %r: %s',
+            config_filename,
+            err,
         )
         sys.exit(1)
     else:
         my_logger.debug(
-            'parse_config_file() returned: uri_list=%r search_base=%r who=%r sasl_mech=%r cacert_filename=%r',
+            (
+                'parse_config_file() returned:'
+                'uri_list=%r search_base=%r who=%r sasl_mech=%r cacert_filename=%r'
+            ),
             uri_list,
             search_base,
             who,
@@ -319,11 +333,11 @@ def main():
         my_logger.debug('Reading file(s) with excluded users: %s', repr(fname))
         try:
             user_exclude_file = open(fname, 'rb')
-        except Exception, e:
+        except Exception, err:
             my_logger.critical(
-                'Aborting! Error opening %s: %s',
-                repr(fname),
-                str(e),
+                'Aborting! Error opening %r: %s',
+                fname,
+                err,
             )
             sys.exit(1)
         else:
@@ -397,32 +411,28 @@ def main():
                 ldap_conn.simple_bind_s(who or '', cred)
             # Try to find out the real authz-DN to deal with bind-DN rewriting
             who = ldap_conn.whoami_s()[3:]
-        except ldap.LDAPError, e:
+        except ldap.LDAPError, ldap_err:
+            my_logger.debug(
+                'Error opening LDAP connection (%d. LDAP URI) to %r: %s',
+                ldapconn_retrycount,
+                ldap_conn_uri,
+                ldap_err,
+            )
             if ldapconn_retrycount >= len(uri_list):
                 my_logger.critical(
-                    'Error opening LDAP connection (%d. LDAP URI) to %s: %s',
-                    ldapconn_retrycount,
-                    repr(ldap_conn_uri),
-                    repr(e),
+                    'Error opening LDAP connection to any of %r => abort',
+                    uri_list,
                 )
                 sys.exit(1)
-            else:
-                my_logger.debug(
-                    'Error during opening LDAP connection (%d. LDAP URI) to %s: %s',
-                    ldapconn_retrycount,
-                    repr(ldap_conn_uri),
-                    repr(e)
-                )
-                time.sleep(1.0)
-        except CATCH_ALL_EXCEPTION, e:
-            my_logger.critical('Abort to due to unhandled exception: %s', str(e))
+        except CATCH_ALL_EXCEPTION, err:
+            my_logger.critical('Abort to due to unhandled exception: %s', err)
             sys.exit(1)
         else:
             my_logger.debug(
-                'Successfully opened LDAP connection (%d. LDAP URI) to %s as %s',
+                'Successfully opened LDAP connection (%d. LDAP URI) to %r as %r',
                 ldapconn_retrycount,
-                repr(ldap_conn_uri),
-                repr(ldap_conn.whoami_s())
+                ldap_conn_uri,
+                ldap_conn.whoami_s(),
             )
 
             break
@@ -465,11 +475,11 @@ def main():
                     'No search result reading server group entry %s',
                     repr(ldap_srvgrp_dn),
                 )
-        except Exception, e:
+        except Exception, err:
             my_logger.warn(
-                'Unhandled exception while reading server group entry %s: %s',
-                repr(ldap_srvgrp_dn),
-                str(e)
+                'Unhandled exception while reading server group entry %r: %s',
+                ldap_srvgrp_dn,
+                err,
             )
 
     or_sub_filters = []
@@ -575,7 +585,7 @@ def main():
             ssh_key_prefix = ''
         my_logger.debug('ssh_key_prefix = %r', ssh_key_prefix)
 
-        new_user_ssh_key = sorted([
+        new_user_ssh_keys = sorted([
             ''.join((ssh_key_prefix, ssh_key.strip()))
             for ssh_key in ldap_entry['sshPublicKey']
         ])
@@ -590,21 +600,17 @@ def main():
                 repr(log_username),
                 AUTHORIZED_KEY_MODE,
             )
-            open(ssh_key_path_name, 'wb').write(new_user_ssh_key)
-            os.chmod(ssh_key_path_name, AUTHORIZED_KEY_MODE)
+            write_ssh_file(ssh_key_path_name, new_user_ssh_keys)
         else:
             old_user_ssh_key.sort()
-            if old_user_ssh_key != new_user_ssh_key:
+            if old_user_ssh_key != new_user_ssh_keys:
                 my_logger.info(
                     'Updating SSH key file %s for %s (mode=%04o)',
                     repr(ssh_key_path_name),
                     repr(log_username),
                     AUTHORIZED_KEY_MODE,
                 )
-                ssh_file = open(ssh_key_path_name, 'wb')
-                ssh_file.write('\n'.join(new_user_ssh_key))
-                ssh_file.close()
-                os.chmod(ssh_key_path_name, AUTHORIZED_KEY_MODE)
+                write_ssh_file(ssh_key_path_name, new_user_ssh_keys)
             else:
                 my_logger.debug(
                     'Old SSH key file unchanged %s of %s',
