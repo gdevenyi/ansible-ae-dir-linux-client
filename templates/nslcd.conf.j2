@@ -28,6 +28,7 @@ deref never
 referrals no
 
 # The DN to bind with for normal lookups.
+# preferred short bind-DN form (relocatable)
 binddn host={{ inventory_hostname }},{{ ldap_suffix }}
 bindpw {{ ldap_host_password }}
 
@@ -44,6 +45,9 @@ nss_nested_groups no
 
 # disable enumeration
 nss_disable_enumeration no
+
+# request password policy controls
+pam_authc_ppolicy yes
 
 # local password changes not allowed
 pam_password_prohibit_message "Changing password on systems is not allowed!"
