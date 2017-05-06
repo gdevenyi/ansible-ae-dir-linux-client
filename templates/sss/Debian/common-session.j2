@@ -1,10 +1,11 @@
+# {{ ansible_managed }}
 #
-# /etc/pam.d/common-session-noninteractive - session-related modules
-# common to all non-interactive services
+# /etc/pam.d/common-session - session-related modules common to all services
 #
 # This file is included from other service-specific PAM config files,
 # and should contain a list of modules that define tasks to be performed
-# at the start and end of all non-interactive sessions.
+# at the start and end of sessions of *any* kind (both interactive and
+# non-interactive).
 #
 # As of pam 1.0.1-6, this file is managed by pam-auth-update by default.
 # To take advantage of this, it is recommended that you configure any
@@ -22,4 +23,5 @@ session	requisite			pam_deny.so
 session	required			pam_permit.so
 # and here are more per-package modules (the "Additional" block)
 session	required	pam_unix.so 
+session	optional			pam_sss.so 
 # end of pam-auth-update config

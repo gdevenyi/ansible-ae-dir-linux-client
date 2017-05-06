@@ -92,9 +92,9 @@
     group: root
     mode: 0644
 
-- name: "Install PAM config files from {{ nsswitch_module }}/"
+- name: "Install PAM config files from {{ nsswitch_module }}/{{ lsb_id }}"
   template:
-    src: "{{ nsswitch_module }}/{{ item }}.j2"
+    src: "{{ nsswitch_module }}/{{ lsb_id }}/{{ item }}.j2"
     dest: "/etc/pam.d/{{ item }}"
     owner: root
     group: root
@@ -104,7 +104,7 @@
     - common-auth
     - common-password
     - common-session
-    - common-session-noninteractive
+#    - common-session-noninteractive
 
 - name: "Install sudoers file"
   template:
