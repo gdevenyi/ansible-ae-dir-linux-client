@@ -92,9 +92,9 @@
     group: root
     mode: 0644
 
-- name: "Install PAM config files from {{ nsswitch_module }}/{{ lsb_id }}"
+- name: "Install PAM config files from {{ pam_template_dir }}/"
   template:
-    src: "{{ nsswitch_module }}/{{ lsb_id }}/{{ item }}.j2"
+    src: "{{ pam_template_dir }}/{{ item }}.j2"
     dest: "/etc/pam.d/{{ item }}"
     owner: root
     group: root
