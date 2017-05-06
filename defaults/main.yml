@@ -69,6 +69,8 @@ search_ssh_config:
   sss: "{{ sssd_conf_file }}"
   ldap: "{{ nslcd_conf_file }}"
 
+# where to find the system-specific Jinja2 templates
+# for creating PAM config files /etc/pam.d/common-*
 pam_template_dir: "{{ nsswitch_module }}/{{ lsb_id }}"
 
 # LDAP search filter for PAM authorization
