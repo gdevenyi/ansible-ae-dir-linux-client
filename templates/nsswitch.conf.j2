@@ -11,19 +11,19 @@ group:          files {{ nsswitch_group_module }}
 shadow:         files
 gshadow:        files
 
-hosts:  	files dns
-networks:	files dns
+hosts:          files dns
+networks:       files dns
 
-services:	files
-protocols:	files
-rpc:		files
-ethers:		files
-netmasks:	files
-netgroup:	files nis
-publickey:	files
+services:       files
+protocols:      files
+rpc:            files
+ethers:         files
+netmasks:       files
+netgroup:       files
+publickey:      files
 
-bootparams:	files
-automount:	files nis
-aliases:	files
+bootparams:     files
+automount:      files
+aliases:        files
 
 sudoers:        files {{ nsswitch_sudoers_module }}
