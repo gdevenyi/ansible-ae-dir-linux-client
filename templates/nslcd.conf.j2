@@ -54,3 +54,6 @@ pam_password_prohibit_message "Changing password on systems is not allowed!"
 
 # Check the SSH client's hostname in user entry
 pam_authz_search {{ pam_authz_search }}
+
+# hosts map: canonical hostname read from attribute 'aeFqdn'
+map hosts cn aeFqdn
