@@ -6,7 +6,7 @@
     state: installed
     install_recommends: no
     update_cache: yes
-    cache_valid_time: 8
+    cache_valid_time: 3600
     dpkg_options: 'force-confold,force-confdef'
   notify:
   - restart sssd
