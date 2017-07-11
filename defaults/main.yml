@@ -30,9 +30,11 @@ os_vars:
   Debian:
     sshd_service_name: "ssh"
     nslcd_package_name: "nslcd"
+    ssh_lib_dir: "/usr/lib/openssh"
   SUSE:
     sshd_service_name: "sshd"
     nslcd_package_name: "nslcd"
+    ssh_lib_dir: "/usr/lib/ssh"
 
 # which modules to use in /etc/nsswitch.conf
 nsswitch_module: "ldap"
