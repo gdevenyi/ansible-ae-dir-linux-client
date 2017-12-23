@@ -59,7 +59,7 @@ USE_MEMBEROF = 1
 # Minimum number of user SSH keys expected to be found
 # script exits with error code 2 and won't delete keys if less LDAP
 # results than this number were received
-EXPECTED_KEYS_MINCOUNT = 0
+EXPECTED_KEYS_MINCOUNT = 1
 
 # Base filter for searching entries with attribute 'sshPublicKey'
 USER_ENTRY_BASE_FILTER_TMPL = '(&(objectClass=ldapPublicKey)(sshPublicKey=*)%s(|%s))'
