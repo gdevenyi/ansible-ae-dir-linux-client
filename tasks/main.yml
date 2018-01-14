@@ -5,7 +5,7 @@
 #-----------------------------------------------------------------------
 
 - name: "python-ldap packages for platform {{ lsb_id }}"
-  include: "pyldap-{{ lsb_id }}.yml"
+  include_tasks: "pyldap-{{ lsb_id }}.yml"
 
 # SSH authorized keys
 #-----------------------------------------------------------------------
@@ -60,10 +60,10 @@
 #-----------------------------------------------------------------------
 
 - name: "Install caching demon for module {{ nsswitch_module }}"
-  include: "{{ nsswitch_module }}.yml"
+  include_tasks: "{{ nsswitch_module }}.yml"
 
 - name: "Install caching demon for module {{ nsswitch_module }}"
-  include: "nscd.yml"
+  include_tasks: "nscd.yml"
   when:
     nscd_enabled == True
 
@@ -77,7 +77,7 @@
     dest: "/etc/ssh/sshd_config"
     owner: root
     group: root
-    mode: 0644
+    mode: 0640
     validate: "/usr/sbin/sshd -t -f %s"
   notify: restart sshd
 

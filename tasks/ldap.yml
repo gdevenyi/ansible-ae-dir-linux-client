@@ -3,7 +3,7 @@
 #-----------------------------------------------------------------------
 
 - name: "Install packages for {{ nslcd_package_name }} on {{ lsb_id }}"
-  include: "ldap-{{ lsb_id }}.yml"
+  include_tasks: "ldap-{{ lsb_id }}.yml"
 
 - name: "CA certificate file"
   copy:
