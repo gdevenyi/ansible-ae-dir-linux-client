@@ -5,7 +5,7 @@
 - name: "Install packages for {{ nslcd_package_name }} on {{ lsb_id }}"
   apt:
     name: "{{ item }}"
-    state: installed
+    state: present
     install_recommends: no
     update_cache: yes
     cache_valid_time: 3600

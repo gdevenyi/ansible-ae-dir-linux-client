@@ -3,7 +3,7 @@
 - name: "Install sssd-ldap, PAM/NSS and LDAP backend packages"
   apt:
     name: "{{ item }}"
-    state: installed
+    state: present
     install_recommends: no
     update_cache: yes
     cache_valid_time: 3600
