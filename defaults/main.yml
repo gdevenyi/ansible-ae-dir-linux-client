@@ -57,6 +57,12 @@ nslcd_conf_file: "{{ nslcd_conf_dir }}/nslcd.conf"
 # service name of SSH demon
 sshd_service_name: "{{ os_vars[lsb_id].sshd_service_name }}"
 
+# Filename of Jinja2 template file used for generating sshd_config
+sshd_config_template: "sshd_config.j2"
+
+# ListenAddress values
+sshd_listen_addresses: []
+
 # pathname of nscd configuration file
 nscd_conf_file: "/etc/nscd.conf"
 

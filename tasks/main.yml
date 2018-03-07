@@ -65,9 +65,9 @@
 # these should be the last tasks!
 #-----------------------------------------------------------------------
 
-- name: "Install sshd_config"
+- name: "Install sshd_config based on {{ sshd_config_template }}"
   template:
-    src: "sshd_config.j2"
+    src: "{{ sshd_config_template }}"
     dest: "/etc/ssh/sshd_config"
     owner: root
     group: root
