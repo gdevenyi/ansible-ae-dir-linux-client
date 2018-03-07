@@ -1,12 +1,6 @@
 ---
 # tasks file for roles/ae-linux-login
 
-# python-ldap
-#-----------------------------------------------------------------------
-
-- name: "python-ldap packages for platform {{ lsb_id }}"
-  include_tasks: "pyldap-{{ lsb_id }}.yml"
-
 # SSH authorized keys
 #-----------------------------------------------------------------------
 

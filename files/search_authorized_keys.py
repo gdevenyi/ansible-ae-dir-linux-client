@@ -3,13 +3,9 @@
 """
 Export SSH keys of users from their LDAP entries into a directory
 configured to hold all authorized keys (see pattern for AuthorizedKeysFile)
-
-Needs:
-Python 2.4.x+
-python-ldap 2.3.x+
 """
 
-__version__ = '0.13.0'
+__version__ = '0.14.0'
 
 #-----------------------------------------------------------------------
 # Imports
@@ -25,12 +21,12 @@ import glob
 import logging
 import pwd
 
-# from python-ldap
-import ldap
-import ldap.sasl
-import ldap.cidict
-import ldapurl
-from ldap.ldapobject import ReconnectLDAPObject
+# from ldap0 package
+import ldap0
+import ldap0.sasl
+import ldap0.cidict
+import ldap0.ldapurl
+from ldap0.ldapobject import ReconnectLDAPObject
 
 #-----------------------------------------------------------------------
 # Configuration constants
@@ -46,7 +42,7 @@ SSH_KEY_REGEX = '^ssh-(rsa|dss) .+$'
 # Permissions for stored authorized keys
 AUTHORIZED_KEY_MODE = 0644
 
-# Trace level for python-ldap logs
+# Trace level for ldap0 logging
 PYLDAP_TRACELEVEL = 0
 
 # attribute containing valid remote host IP addresses used to generate the
@@ -77,7 +73,7 @@ USER_ENTRY_FILTERS = (
 USER_EXCLUDE_FILENAME = '/etc/ssh/ignore-ssh-keyfiles'
 
 # Timeout in seconds when connecting to local and remote LDAP servers
-# used for ldap.OPT_NETWORK_TIMEOUT and ldap.OPT_TIMEOUT
+# used for ldap0.OPT_NETWORK_TIMEOUT and ldap0.OPT_TIMEOUT
 LDAP_TIMEOUT = 5.0
 
 # Number of times connecting to LDAP is tried
@@ -91,7 +87,7 @@ CATCH_ALL_EXCEPTION = Exception
 #-----------------------------------------------------------------------
 
 
-class LogWrapperFile:
+class LogWrapperFile(object):
     """
     file-like wrapper object around logging handler
     """
@@ -107,7 +103,7 @@ class LogWrapperFile:
         self._logger.log(self._log_level, msg[:-1])
 
 
-class MyLDAPUrl(ldapurl.LDAPUrl):
+class MyLDAPUrl(ldap0.ldapurl.LDAPUrl):
     """
     Additional LDAP URL extension in class attributes
     """
@@ -355,10 +351,10 @@ def main():
     )
 
     # Force server cert validation
-    ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_DEMAND)
+    ldap0.set_option(ldap0.OPT_X_TLS_REQUIRE_CERT, ldap0.OPT_X_TLS_DEMAND)
     # Set path name of file containing all trusted CA certificates
     if cacert_filename:
-        ldap.set_option(ldap.OPT_X_TLS_CACERTFILE, cacert_filename)
+        ldap0.set_option(ldap0.OPT_X_TLS_CACERTFILE, cacert_filename)
 
     pyldap_trace_level = PYLDAP_TRACELEVEL
     if pyldap_trace_level:
@@ -366,8 +362,8 @@ def main():
     else:
         pyldap_trace_file = None
 
-    ldap.trace_level = pyldap_trace_level
-    ldap.trace_file = pyldap_trace_file
+    ldap0.trace_level = pyldap_trace_level
+    ldap0.trace_file = pyldap_trace_file
 
 
     ldapconn_retrycount = 0
@@ -390,12 +386,12 @@ def main():
                 retry_delay=1.0
             )
             # Set timeout values
-            ldap_conn.set_option(ldap.OPT_NETWORK_TIMEOUT, LDAP_TIMEOUT)
-            ldap_conn.set_option(ldap.OPT_TIMEOUT, LDAP_TIMEOUT)
+            ldap_conn.set_option(ldap0.OPT_NETWORK_TIMEOUT, LDAP_TIMEOUT)
+            ldap_conn.set_option(ldap0.OPT_TIMEOUT, LDAP_TIMEOUT)
             # Switch of automatic referral chasing
-            ldap_conn.set_option(ldap.OPT_REFERRALS, 0)
+            ldap_conn.set_option(ldap0.OPT_REFERRALS, 0)
             # Switch of automatic alias dereferencing
-            ldap_conn.set_option(ldap.OPT_DEREF, ldap.DEREF_NEVER)
+            ldap_conn.set_option(ldap0.OPT_DEREF, ldap0.DEREF_NEVER)
             # Use StartTLS ext.op. if necessary
             if ldap_conn_uri.lower().startswith('ldap://'):
                 my_logger.debug('Send StartTLS ext.op.')
@@ -404,14 +400,14 @@ def main():
             if sasl_mech == 'EXTERNAL':
                 # SASL/EXTERNAL bind to LDAP server (SSL client authc)
                 my_logger.debug('SASL/EXTERNAL bind')
-                ldap_conn.sasl_interactive_bind_s('', ldap.sasl.sasl({}, sasl_mech))
+                ldap_conn.sasl_bind_s(None, 'EXTERNAL', '')
             else:
                 # Simple bind to LDAP server
                 my_logger.debug('Simple bind as %s', repr(who))
                 ldap_conn.simple_bind_s(who or '', cred)
             # Try to find out the real authz-DN to deal with bind-DN rewriting
             who = ldap_conn.whoami_s()[3:]
-        except ldap.LDAPError, ldap_err:
+        except ldap0.LDAPError as ldap_err:
             my_logger.debug(
                 'Error opening LDAP connection (%d. LDAP URI) to %r: %s',
                 ldapconn_retrycount,
@@ -438,7 +434,7 @@ def main():
             break
 
     # Assume that the server group entry is the parent entry of own server entry
-    ldap_srvgrp_dn = ','.join(ldap.explode_dn(who)[1:])
+    ldap_srvgrp_dn = ','.join(ldap0.dn.explode_dn(who)[1:])
 
     memberof_filterstr = ''
     if USE_MEMBEROF:
@@ -446,7 +442,7 @@ def main():
             # Read the server type entry
             ldap_srvgrp_result = ldap_conn.search_s(
                 ldap_srvgrp_dn,
-                ldap.SCOPE_BASE,
+                ldap0.SCOPE_BASE,
                 '(objectClass=aeSrvGroup)',
                 attrlist=['cn', 'aeLoginGroups']
             )
@@ -520,7 +516,7 @@ def main():
     # Grab all LDAP entries with a single synchronous search
     all_entries = ldap_conn.search_s(
         search_base,
-        ldap.SCOPE_SUBTREE,
+        ldap0.SCOPE_SUBTREE,
         ldap_filterstr,
         attrlist=user_attr_list,
     )
