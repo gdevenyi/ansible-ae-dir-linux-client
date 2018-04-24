@@ -23,7 +23,7 @@ ldap_max_uid: 65000
 
 # TLS files
 ldap_cacert_filename: "cacert.pem"
-ldap_cacert_pathname: "/etc/ssl/certs/{{ ldap_cacert_filename }}"
+ldap_cacert_pathname: "/etc/ssl/certs/{{ ldap_cacert_filename|basename }}"
 
 # nested dict of OS-specific vars
 os_vars:
