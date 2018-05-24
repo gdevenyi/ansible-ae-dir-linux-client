@@ -5,7 +5,7 @@
 - name: "Install packages for {{ nslcd_package_name }} on {{ lsb_id }}"
   include_tasks: "ldap-{{ lsb_id }}.yml"
 
-- name: "CA certificate file"
+- name: "CA certificate file {{ ldap_cacert_pathname }}"
   copy:
     src: "{{ ldap_cacert_filename }}"
     dest: "{{ ldap_cacert_pathname }}"

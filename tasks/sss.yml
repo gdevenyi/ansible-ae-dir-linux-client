@@ -4,7 +4,7 @@
 - name: "Install caching demon for module {{ nsswitch_module }} on {{ lsb_id }}"
   include_tasks: "{{ nsswitch_module }}-{{ lsb_id }}.yml"
 
-- name: "CA certificate file"
+- name: "CA certificate file {{ ldap_cacert_pathname }}"
   copy:
     src: "{{ ldap_cacert_filename }}"
     dest: "{{ ldap_cacert_pathname }}"
