@@ -49,15 +49,9 @@ ChallengeResponseAuthentication no
 # Change to no to disable tunnelled clear text passwords
 PasswordAuthentication yes
 
-# Kerberos options
-#KerberosAuthentication no
-#KerberosGetAFSToken no
-#KerberosOrLocalPasswd yes
-#KerberosTicketCleanup yes
-
-# GSSAPI options
-#GSSAPIAuthentication no
-#GSSAPICleanupCredentials yes
+# no Kerberos/GSSAPI
+KerberosAuthentication no
+GSSAPIAuthentication no
 
 X11Forwarding yes
 X11DisplayOffset 10
