@@ -29,4 +29,9 @@
   service: name="{{ nslcd_package_name }}" state=started enabled=yes
 
 - name: "Create sudo-ldap.conf"
-  template: src="sudo-ldap.conf.j2" dest="/etc/sudo-ldap.conf" owner=root group=root mode=0600
+  template:
+    src: "sudo-ldap.conf.j2"
+    dest: "{{ os_vars[lsb_id].sudo_ldap_conf }}"
+    owner: root
+    group: root
+    mode: 0640

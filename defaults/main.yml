@@ -23,7 +23,7 @@ ldap_max_uid: 65000
 
 # TLS files
 ldap_cacert_filename: "cacert.pem"
-ldap_cacert_pathname: "/etc/ssl/certs/{{ ldap_cacert_filename|basename }}"
+ldap_cacert_pathname: "/etc/ssl/{{ ldap_cacert_filename|basename }}"
 
 # nested dict of OS-specific vars
 os_vars:
@@ -31,10 +31,12 @@ os_vars:
     sshd_service_name: "ssh"
     nslcd_package_name: "nslcd"
     ssh_lib_dir: "/usr/lib/openssh"
+    sudo_ldap_conf: "/etc/sudo-ldap.conf"
   SUSE:
     sshd_service_name: "sshd"
     nslcd_package_name: "nslcd"
     ssh_lib_dir: "/usr/lib/ssh"
+    sudo_ldap_conf: "/etc/ldap.conf"
 
 # which modules to use in /etc/nsswitch.conf
 nsswitch_module: "ldap"
