@@ -88,12 +88,4 @@ pam_template_dir: "{{ nsswitch_module }}/{{ lsb_id }}"
 # note that AE-DIR already does this implicit via visibility of aeUser entries
 
 # allow only active users with explicit login rights in AE-DIR
-#pam_authz_search: "(&(objectClass=posixAccount)(uid=$username)(uidNumber>={{ ldap_min_uid }})(uidNumber<={{ ldap_max_uid }})(|(pwdChangedTime=*)(userCertificate=*)(sshPublicKey=*)))"
-
-# Optional security:
-# Additionally check known remote host in attribute 'aeRemoteHost' if attribute is present
-pam_authz_search: "(&(objectClass=posixAccount)(uid=$username)(uidNumber>={{ ldap_min_uid }})(uidNumber<={{ ldap_max_uid }})(|(pwdChangedTime=*)(userCertificate=*)(sshPublicKey=*))(|(!(aeRemoteHost=*))(aeRemoteHost=$rhost)))"
-
-# High security:
-# Additionally Enforce known remote host in attribute "aeRemoteHost" in any case
-#pam_authz_search: "(&(objectClass=posixAccount)(uid=$username)(uidNumber>={{ ldap_min_uid }})(uidNumber<={{ ldap_max_uid }})(|(pwdChangedTime=*)(userCertificate=*)(sshPublicKey=*))(aeRemoteHost=$rhost))"
+pam_authz_search: "(&(objectClass=posixAccount)(uid=$username)(uidNumber>={{ ldap_min_uid }})(uidNumber<={{ ldap_max_uid }})(|(pwdChangedTime=*)(userCertificate=*)(sshPublicKey=*)))"
