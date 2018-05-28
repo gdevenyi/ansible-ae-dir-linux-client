@@ -10,6 +10,5 @@
 # the central access policy for use on the system.  The default is to
 # only deny service to users whose accounts are expired.
 #
-account	requisite	pam_unix.so	try_first_pass 
-account	sufficient	pam_localuser.so 
-account	required	pam_ldap.so	use_first_pass minimum_uid={{ ldap_min_uid }}
+account	sufficient	pam_unix.so
+account	required	pam_ldap.so	minimum_uid={{ ldap_min_uid }}
