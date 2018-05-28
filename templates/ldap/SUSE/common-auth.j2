@@ -11,6 +11,6 @@
 # (e.g., /etc/shadow, LDAP, Kerberos, etc.). The default is to use the
 # traditional Unix authentication mechanisms.
 #
-auth	required	pam_env.so	
-auth	sufficient	pam_unix.so	try_first_pass 
+auth	required	pam_env.so
+auth	sufficient	pam_unix.so	try_first_pass
 auth	required	pam_ldap.so	use_first_pass minimum_uid={{ ldap_min_uid }}
