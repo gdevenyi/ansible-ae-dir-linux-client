@@ -11,5 +11,4 @@
 # only deny service to users whose accounts are expired.
 #
 account	requisite	pam_unix.so	try_first_pass 
-account	sufficient	pam_localuser.so 
 account	required	pam_sss.so	use_first_pass	
