@@ -10,5 +10,5 @@
 # the central access policy for use on the system.  The default is to
 # only deny service to users whose accounts are expired.
 #
-account	requisite	pam_unix.so	try_first_pass 
-account	required	pam_sss.so	use_first_pass	
+account	sufficient	pam_sss.so
+account	required	pam_unix.so
