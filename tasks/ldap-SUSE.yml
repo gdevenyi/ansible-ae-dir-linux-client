@@ -1,13 +1,12 @@
 ---
-# (py)nslcd aka nss-pam-ldapd
+# nslcd aka nss-pam-ldapd
 #-----------------------------------------------------------------------
 
 - name: "Install packages for {{ nslcd_package_name }} on {{ lsb_id }}"
   zypper:
-    name: "{{ item }}"
+    name:
+      - nss-pam-ldapd
+      - sudo
     state: present
     disable_recommends: yes
     type: package
-  with_items:
-    - nss-pam-ldapd
-    - sudo

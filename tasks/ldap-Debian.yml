@@ -4,14 +4,13 @@
 
 - name: "Install packages for {{ nslcd_package_name }} on {{ lsb_id }}"
   apt:
-    name: "{{ item }}"
+    name:
+      - "{{ nslcd_package_name }}"
+      - libpam-ldapd
+      - libnss-ldapd
+      - sudo-ldap
     state: present
     install_recommends: no
     update_cache: yes
     cache_valid_time: 3600
     dpkg_options: 'force-confold,force-confdef'
-  with_items:
-    - "{{ nslcd_package_name }}"
-    - libpam-ldapd
-    - libnss-ldapd
-    - sudo-ldap

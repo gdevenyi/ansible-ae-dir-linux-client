@@ -2,13 +2,12 @@
 
 - name: "Install sssd-ldap, PAM/NSS, LDAP backend and sudo packages"
   zypper:
-    name: "{{ item }}"
+    name:
+      - sssd
+      - sssd-ldap
+      - sudo
     state: latest
     disable_recommends: yes
     type: package
   notify:
   - restart sssd
-  with_items:
-  - sssd
-  - sssd-ldap
-  - sudo
