@@ -21,7 +21,7 @@ HostKey /etc/ssh/ssh_host_ecdsa_key
 
 # Logging
 SyslogFacility AUTH
-LogLevel INFO
+LogLevel {{ sshd_loglevel }}
 
 # Authentication:
 LoginGraceTime 120
@@ -31,6 +31,11 @@ StrictModes yes
 PubkeyAuthentication yes
 #AuthorizedKeysFile	%h/.ssh/authorized_keys
 AuthorizedKeysFile /etc/ssh/authorized_keys/%u
+
+{% if ssh_trusted_userca_keys %}
+# File name of public keys trusted for signing user certs
+TrustedUserCAKeys /etc/ssh/{{ ssh_trusted_userca_keys }}
+{% endif %}
 
 # Don't read the user's ~/.rhosts and ~/.shosts files
 IgnoreRhosts yes

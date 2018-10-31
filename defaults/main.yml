@@ -65,11 +65,18 @@ sshd_config_template: "sshd_config.j2"
 # ListenAddress values
 sshd_listen_addresses: []
 
+# Log level for sshd
+sshd_loglevel: "INFO"
+
 # pathname of nscd configuration file
 nscd_conf_file: "/etc/nscd.conf"
 
 # File name of emergency authorized keys for user root
 ssh_emergency_root_keys: "ssh_emergency_root_keys"
+
+# Path name of public keys trusted for signing user certs
+#ssh_trusted_userca_keys: "/etc/ssh/trusted_user_ca_keys"
+ssh_trusted_userca_keys: ""
 
 # search for SSH public keys every n minutes
 search_authorized_keys_minutes: 4

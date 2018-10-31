@@ -33,6 +33,16 @@
     group: root
     mode: 0640
 
+- name: "Install SSH trusted user CA key(s)"
+  copy:
+    src: "{{ ssh_trusted_userca_keys|dirname }}"
+    dest: "{{ ssh_trusted_userca_keys }}"
+    owner: root
+    group: root
+    mode: 0640
+  when:
+    ssh_trusted_userca_keys != ""
+
 - name: "Install SSH key grabber script"
   copy:
     src: "search_authorized_keys.py"
