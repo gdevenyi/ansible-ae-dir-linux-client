@@ -1,17 +1,37 @@
 ---
 # handlers file for roles/ae-dir-linux-client
 
-- name: restart sssd
-  service: name=sssd state=restarted
+- name: "restart sssd"
+  listen:
+    - "restart sssd"
+  service:
+    name: "sssd"
+    state: restarted
 
-- name: restart nscd
-  service: name=nscd state=restarted
+- name: "restart nscd"
+  listen:
+    - "restart nscd"
+  service:
+    name: "nscd"
+    state: restarted
 
-- name: restart nslcd
-  service: name=nslcd state=restarted
+- name: "restart nslcd"
+  listen:
+    - "restart nslcd"
+  service:
+    name: "nslcd"
+    state: restarted
 
 - name: "restart ssh"
-  service: name="ssh" state=restarted
+  listen:
+    - "restart ssh"
+  service:
+    name: "ssh"
+    state: restarted
 
 - name: "restart sshd"
-  service: name="sshd" state=restarted
+  listen:
+    - "restart sshd"
+  service:
+    name: "sshd"
+    state: restarted
