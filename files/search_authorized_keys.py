@@ -5,7 +5,7 @@ Export SSH keys of users from their LDAP entries into a directory
 configured to hold all authorized keys (see pattern for AuthorizedKeysFile)
 """
 
-__version__ = '0.14.0'
+__version__ = '0.14.1'
 
 #-----------------------------------------------------------------------
 # Imports
@@ -43,7 +43,7 @@ SSH_KEY_REGEX = '^ssh-(rsa|dss) .+$'
 AUTHORIZED_KEY_MODE = 0644
 
 # Trace level for ldap0 logging
-PYLDAP_TRACELEVEL = 0
+LDAP0_TRACE_LEVEL = 0
 
 # attribute containing valid remote host IP addresses used to generate the
 # key option from="pattern-list" (set to None to disable it)
@@ -85,22 +85,6 @@ CATCH_ALL_EXCEPTION = Exception
 #-----------------------------------------------------------------------
 # Classes and functions
 #-----------------------------------------------------------------------
-
-
-class LogWrapperFile(object):
-    """
-    file-like wrapper object around logging handler
-    """
-
-    def __init__(self, logger, log_level):
-        self._logger = logger
-        self._log_level = log_level
-
-    def write(self, msg):
-        """
-        Write msg to log
-        """
-        self._logger.log(self._log_level, msg[:-1])
 
 
 class MyLDAPUrl(ldap0.ldapurl.LDAPUrl):
@@ -317,6 +301,8 @@ def main():
         user_exclude_filenames = [user_exclude_pathname]
     elif os.path.isdir(user_exclude_pathname):
         user_exclude_filenames = glob.glob(os.path.join(user_exclude_pathname, '*'))
+    else:
+        user_exclude_filenames = []
 
     my_logger.debug(
         'File(s) with excluded users: %s',
@@ -356,14 +342,7 @@ def main():
     if cacert_filename:
         ldap0.set_option(ldap0.OPT_X_TLS_CACERTFILE, cacert_filename)
 
-    pyldap_trace_level = PYLDAP_TRACELEVEL
-    if pyldap_trace_level:
-        pyldap_trace_file = LogWrapperFile(my_logger, logging.DEBUG)
-    else:
-        pyldap_trace_file = None
-
-    ldap0.trace_level = pyldap_trace_level
-    ldap0.trace_file = pyldap_trace_file
+    ldap0._trace_level = LDAP0_TRACE_LEVEL
 
 
     ldapconn_retrycount = 0
@@ -380,8 +359,7 @@ def main():
             ldapconn_retrycount += 1
             ldap_conn = ReconnectLDAPObject(
                 ldap_conn_uri,
-                trace_level=pyldap_trace_level,
-                trace_file=pyldap_trace_file,
+                trace_level=LDAP0_TRACE_LEVEL,
                 retry_max=LDAP_MAXRETRYCOUNT,
                 retry_delay=1.0
             )
