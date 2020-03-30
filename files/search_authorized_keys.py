@@ -546,7 +546,7 @@ def main():
         for ssh_key in ldap_entry['sshPublicKey']:
             if ssh_reobj.match(ssh_key) is None:
                 my_logger.warn(
-                    'Errornous SSH key in LDAP entry %s',
+                    'Erroneous SSH key in LDAP entry %s',
                     repr(ldap_dn)
                 )
                 continue
