@@ -5,7 +5,7 @@ Export SSH keys of users from their LDAP entries into a directory
 configured to hold all authorized keys (see pattern for AuthorizedKeysFile)
 """
 
-__version__ = '0.14.1'
+__version__ = '0.15.0'
 
 #-----------------------------------------------------------------------
 # Imports
@@ -20,13 +20,14 @@ import os.path
 import glob
 import logging
 import pwd
+from logging.handlers import SysLogHandler
 
-# from ldap0 package
+# module package ldap0
 import ldap0
-import ldap0.sasl
-import ldap0.cidict
-import ldap0.ldapurl
-from ldap0.ldapobject import ReconnectLDAPObject
+
+# module package aedir
+from aedir import AEDirObject
+from aedir.models import AEStatus
 
 #-----------------------------------------------------------------------
 # Configuration constants
@@ -37,10 +38,10 @@ LOG_DEVICE = '/dev/log'
 
 # regex pattern of acceptable SSH authorized keys
 # this is handy when enforcing some rules on key comments
-SSH_KEY_REGEX = '^ssh-(rsa|dss) .+$'
+SSH_KEY_REGEX = '^ssh-(rsa|dss|ed25519) .+$'
 
 # Permissions for stored authorized keys
-AUTHORIZED_KEY_MODE = 0644
+AUTHORIZED_KEY_MODE = 0o644
 
 # Trace level for ldap0 logging
 LDAP0_TRACE_LEVEL = 0
@@ -49,23 +50,20 @@ LDAP0_TRACE_LEVEL = 0
 # key option from="pattern-list" (set to None to disable it)
 RHOST_ATTR = 'aeRemoteHost'
 
-# Whether to optimize search with memberOf filter
-USE_MEMBEROF = 1
-
 # Minimum number of user SSH keys expected to be found
 # script exits with error code 2 and won't delete keys if less LDAP
 # results than this number were received
-EXPECTED_KEYS_MINCOUNT = 1
+EXPECTED_KEYS_MINCOUNT = 0
 
 # Base filter for searching entries with attribute 'sshPublicKey'
-USER_ENTRY_BASE_FILTER_TMPL = '(&(objectClass=ldapPublicKey)(sshPublicKey=*)%s(|%s))'
+USER_ENTRY_BASE_FILTER_TMPL = '(&(objectClass=ldapPublicKey)(sshPublicKey=*)(|{0}))'
 
 # 1. LDAP filter part to use for searching for user entries
 # 2. Time in seconds after which a password is no longer valid (password expiry)
 # MUST match attribute 'pwdMaxAge' of appropriate password policy entry
 # Set to None or 0 to omit pwdChangedTime filter part.
 USER_ENTRY_FILTERS = (
-    ('(&(objectClass=aeUser)%s)', 6048000),
+    ('(&(objectClass=aeUser)%s)', 31536000),
     ('(objectClass=aeService)%s', None),
 )
 
@@ -79,35 +77,20 @@ LDAP_TIMEOUT = 5.0
 # Number of times connecting to LDAP is tried
 LDAP_MAXRETRYCOUNT = 4
 
-#CATCH_ALL_EXCEPTION = None
-CATCH_ALL_EXCEPTION = Exception
+CATCH_ALL_EXCEPTION = None
+#CATCH_ALL_EXCEPTION = Exception
 
 #-----------------------------------------------------------------------
 # Classes and functions
 #-----------------------------------------------------------------------
 
 
-class MyLDAPUrl(ldap0.ldapurl.LDAPUrl):
-    """
-    Additional LDAP URL extension in class attributes
-    """
-    attr2extype = {
-        'who':'bindname',
-        'cred':'X-BINDPW',
-        'start_tls':'startTLS',
-        'trace_level':'trace',
-        'pwd_filename':'X-PWDFILENAME',
-        'sasl_mech':'x-saslmech',
-    }
-
-
 def write_ssh_file(ssh_key_path_name, new_user_ssh_keys):
     """
     write list of SSH keys into file
     """
-    ssh_file = open(ssh_key_path_name, 'wb')
-    ssh_file.write('\n'.join(new_user_ssh_keys))
-    ssh_file.close()
+    with open(ssh_key_path_name, 'w') as ssh_file:
+        ssh_file.write('\n'.join(new_user_ssh_keys))
     os.chmod(ssh_key_path_name, AUTHORIZED_KEY_MODE)
 
 
@@ -130,7 +113,7 @@ def parse_config_file(config_filename):
         )
 
 
-    config_file = open(config_filename, 'rb')
+    config_file = open(config_filename, 'r+')
     if config_filename.endswith('sssd.conf'):
         sep = '='
     else:
@@ -154,15 +137,15 @@ def parse_config_file(config_filename):
         elif key == 'uri':
             # assume space-separated list in sssd.conf
             uri_list = split_uri_list(value, ' ')
-        elif key == 'ldap_search_base' or key == 'base':
+        elif key in ('ldap_search_base', 'base'):
             search_base = value
-        elif key == 'ldap_default_bind_dn' or key == 'binddn':
+        elif key in ('ldap_default_bind_dn', 'binddn'):
             who = value
-        elif key == 'ldap_default_authtok' or key == 'bindpw':
+        elif key in ('ldap_default_authtok', 'bindpw'):
             cred = value
-        elif key == 'ldap_tls_cacert' or key == 'tls_cacertfile':
+        elif key in ('ldap_tls_cacert', 'tls_cacertfile'):
             cacert_filename = value
-    return (uri_list, search_base, who, cred, sasl_mech, cacert_filename)
+    return (list(uri_list), search_base, who, cred, sasl_mech, cacert_filename)
 
 #-----------------------------------------------------------------------
 # Main...
@@ -178,9 +161,7 @@ def main():
 
     script_name = os.path.basename(sys.argv[0])
 
-
     # for writing to syslog
-    from logging.handlers import SysLogHandler
     my_logger = logging.getLogger(script_name)
     my_syslog_formatter = logging.Formatter(
         fmt=script_name+' %(levelname)s %(message)s'
@@ -205,15 +186,12 @@ def main():
 
     my_logger.debug('Starting %s %s', script_name, __version__)
 
-    # Switch off processing .ldaprc or ldap.conf
-    #os.environ['LDAPNOINIT']='0'
-
     # Determine own system's FQDN and derive server type from that
     host_fqdn = socket.getfqdn()
 
     my_logger.debug('Determined server name: %s', host_fqdn)
 
-    # Kommandozeilenargumente
+    # Command-line arguments
     try:
         config_filename = sys.argv[1]
         path_prefix = sys.argv[2]
@@ -225,10 +203,7 @@ def main():
         sys.exit(1)
 
     if not os.path.isdir(path_prefix):
-        my_logger.critical(
-            'Abort: %s is not a directory!',
-            repr(path_prefix),
-        )
+        my_logger.critical('Abort: %r is not a directory!', path_prefix)
         sys.exit(1)
     # Add a trailing slash if needed
     path_prefix = os.path.join(path_prefix, '')
@@ -238,11 +213,11 @@ def main():
     except IndexError:
         user_exclude_pathname = USER_EXCLUDE_FILENAME
 
-    my_logger.debug('Reading config file: %s', repr(config_filename))
+    my_logger.debug('Reading config file: %r', config_filename)
     try:
         uri_list, search_base, who, cred, sasl_mech, cacert_filename = \
             parse_config_file(config_filename)
-    except CATCH_ALL_EXCEPTION, err:
+    except CATCH_ALL_EXCEPTION as err:
         my_logger.critical(
             'Abort: Error reading config file %r: %s',
             config_filename,
@@ -263,39 +238,36 @@ def main():
         )
         if not uri_list:
             my_logger.critical(
-                'Abort: No LDAP URIs found in config file %s',
-                repr(config_filename),
+                'Abort: No LDAP URIs found in config file %r',
+                config_filename,
             )
             sys.exit(1)
         if not search_base:
             my_logger.critical(
-                'Abort: No search base found in config file %s',
-                repr(config_filename),
+                'Abort: No search base found in config file %r',
+                config_filename,
             )
             sys.exit(1)
         my_logger.debug(
-            'Found %d LDAP URIs in %s: %s',
+            'Found %d LDAP URIs in %r: %r',
             len(uri_list),
-            repr(config_filename),
-            repr(uri_list),
+            config_filename,
+            uri_list,
         )
         if sasl_mech and sasl_mech != 'EXTERNAL':
             my_logger.critical(
-                'Abort: Invalid SASL mech found in configuration: %s',
-                repr(sasl_mech),
+                'Abort: Invalid SASL mech found in configuration: %r',
+                sasl_mech,
             )
             sys.exit(1)
         my_logger.debug(
-            'Auth info: SASL mech: %s bind-DN: %s',
-            repr(sasl_mech),
-            repr(who),
+            'Auth info: SASL mech: %r bind-DN: %r',
+            sasl_mech,
+            who,
         )
 
     if os.path.islink(user_exclude_pathname):
-        my_logger.critical(
-            'Aborting! Link forbidden for %s',
-            repr(user_exclude_pathname),
-        )
+        my_logger.critical('Aborting! Link forbidden for %r', user_exclude_pathname)
         sys.exit(1)
     elif os.path.isfile(user_exclude_pathname):
         user_exclude_filenames = [user_exclude_pathname]
@@ -304,23 +276,16 @@ def main():
     else:
         user_exclude_filenames = []
 
-    my_logger.debug(
-        'File(s) with excluded users: %s',
-        repr(user_exclude_filenames),
-    )
+    my_logger.debug('File(s) with excluded users: %r', user_exclude_filenames)
 
     excluded_users = set([])
 
     for fname in user_exclude_filenames:
-        my_logger.debug('Reading file(s) with excluded users: %s', repr(fname))
+        my_logger.debug('Reading file(s) with excluded users: %r', fname)
         try:
-            user_exclude_file = open(fname, 'rb')
-        except Exception, err:
-            my_logger.critical(
-                'Aborting! Error opening %r: %s',
-                fname,
-                err,
-            )
+            user_exclude_file = open(fname, 'r+')
+        except Exception as err:
+            my_logger.critical('Aborting! Error opening %r: %s', fname, err)
             sys.exit(1)
         else:
             # Read file containing user names to be ignored
@@ -331,16 +296,16 @@ def main():
             ])
 
     my_logger.debug(
-        'Found %d excluded users in ignore file(s): %s',
+        'Found %d excluded users in ignore file(s): %r',
         len(excluded_users),
-        repr(excluded_users),
+        excluded_users,
     )
 
     # Force server cert validation
     ldap0.set_option(ldap0.OPT_X_TLS_REQUIRE_CERT, ldap0.OPT_X_TLS_DEMAND)
     # Set path name of file containing all trusted CA certificates
     if cacert_filename:
-        ldap0.set_option(ldap0.OPT_X_TLS_CACERTFILE, cacert_filename)
+        ldap0.set_option(ldap0.OPT_X_TLS_CACERTFILE, cacert_filename.encode('ascii'))
 
     ldap0._trace_level = LDAP0_TRACE_LEVEL
 
@@ -351,40 +316,23 @@ def main():
 
         ldap_conn_uri = uri_list[ldapconn_retrycount]
         my_logger.debug(
-            'Opening LDAP connection to %s',
-            repr(ldap_conn_uri),
+            'Opening LDAP connection to %r with simple bind as %s',
+            ldap_conn_uri,
+            who,
         )
 
         try:
             ldapconn_retrycount += 1
-            ldap_conn = ReconnectLDAPObject(
+            ldap_conn = AEDirObject(
                 ldap_conn_uri,
                 trace_level=LDAP0_TRACE_LEVEL,
                 retry_max=LDAP_MAXRETRYCOUNT,
-                retry_delay=1.0
+                retry_delay=1.0,
+                timeout=LDAP_TIMEOUT,
+                who=who,
+                cred=cred.encode('utf-8'),
             )
-            # Set timeout values
-            ldap_conn.set_option(ldap0.OPT_NETWORK_TIMEOUT, LDAP_TIMEOUT)
-            ldap_conn.set_option(ldap0.OPT_TIMEOUT, LDAP_TIMEOUT)
-            # Switch of automatic referral chasing
-            ldap_conn.set_option(ldap0.OPT_REFERRALS, 0)
-            # Switch of automatic alias dereferencing
-            ldap_conn.set_option(ldap0.OPT_DEREF, ldap0.DEREF_NEVER)
-            # Use StartTLS ext.op. if necessary
-            if ldap_conn_uri.lower().startswith('ldap://'):
-                my_logger.debug('Send StartTLS ext.op.')
-                ldap_conn.start_tls_s()
-            # Now send bind request which really opens the connection
-            if sasl_mech == 'EXTERNAL':
-                # SASL/EXTERNAL bind to LDAP server (SSL client authc)
-                my_logger.debug('SASL/EXTERNAL bind')
-                ldap_conn.sasl_bind_s(None, 'EXTERNAL', '')
-            else:
-                # Simple bind to LDAP server
-                my_logger.debug('Simple bind as %s', repr(who))
-                ldap_conn.simple_bind_s(who or '', cred)
-            # Try to find out the real authz-DN to deal with bind-DN rewriting
-            who = ldap_conn.whoami_s()[3:]
+            who = ldap_conn.get_whoami_dn()
         except ldap0.LDAPError as ldap_err:
             my_logger.debug(
                 'Error opening LDAP connection (%d. LDAP URI) to %r: %s',
@@ -398,7 +346,7 @@ def main():
                     uri_list,
                 )
                 sys.exit(1)
-        except CATCH_ALL_EXCEPTION, err:
+        except CATCH_ALL_EXCEPTION as err:
             my_logger.critical('Abort to due to unhandled exception: %s', err)
             sys.exit(1)
         else:
@@ -406,55 +354,10 @@ def main():
                 'Successfully opened LDAP connection (%d. LDAP URI) to %r as %r',
                 ldapconn_retrycount,
                 ldap_conn_uri,
-                ldap_conn.whoami_s(),
+                ldap_conn.get_whoami_dn(),
             )
 
             break
-
-    # Assume that the server group entry is the parent entry of own server entry
-    ldap_srvgrp_dn = ','.join(ldap0.dn.explode_dn(who)[1:])
-
-    memberof_filterstr = ''
-    if USE_MEMBEROF:
-        try:
-            # Read the server type entry
-            ldap_srvgrp_result = ldap_conn.search_s(
-                ldap_srvgrp_dn,
-                ldap0.SCOPE_BASE,
-                '(objectClass=aeSrvGroup)',
-                attrlist=['cn', 'aeLoginGroups']
-            )
-            # Check whether exactly one LDAP search result was returned
-            if len(ldap_srvgrp_result) == 1:
-                _, ldap_srvgrp_entry = ldap_srvgrp_result[0]
-                ssh_login_group_entries = ldap_srvgrp_entry.get('aeLoginGroups', [])
-                if ssh_login_group_entries:
-                    my_logger.debug(
-                        'Found %d group(s) referenced (aeLoginGroups) by server group %s',
-                        len(ssh_login_group_entries),
-                        repr(ldap_srvgrp_dn),
-                    )
-                    memberof_filterstr = '(|%s)' % ''.join([
-                        '(memberOf=%s)' % (group_dn)
-                        for group_dn in ssh_login_group_entries
-                    ])
-                else:
-                    my_logger.warn(
-                        'No group entries found in attribute aeLoginGroups'
-                        'of server group entry %s',
-                        repr(ldap_srvgrp_dn),
-                    )
-            else:
-                my_logger.warn(
-                    'No search result reading server group entry %s',
-                    repr(ldap_srvgrp_dn),
-                )
-        except Exception, err:
-            my_logger.warn(
-                'Unhandled exception while reading server group entry %r: %s',
-                ldap_srvgrp_dn,
-                err,
-            )
 
     or_sub_filters = []
     for filter_template, pwd_max_age in USER_ENTRY_FILTERS:
@@ -471,16 +374,13 @@ def main():
         or_sub_filters.append(filter_template % (
             pwdchangedtime_filterstr,
         ))
-    my_logger.debug('or_sub_filters = %s', repr(or_sub_filters))
+    my_logger.debug('or_sub_filters = %r', or_sub_filters)
 
-    ldap_filterstr = USER_ENTRY_BASE_FILTER_TMPL % (
-        memberof_filterstr,
-        ''.join(or_sub_filters),
-    )
+    ldap_filterstr = USER_ENTRY_BASE_FILTER_TMPL.format(''.join(or_sub_filters))
 
     search_start_time = time.time()
+
     user_attr_list = [
-        'cn',
         'uid',
         'sshPublicKey'
     ]
@@ -491,13 +391,15 @@ def main():
         ldap_filterstr,
         user_attr_list,
     )
-    # Grab all LDAP entries with a single synchronous search
-    all_entries = ldap_conn.search_s(
-        search_base,
-        ldap0.SCOPE_SUBTREE,
-        ldap_filterstr,
+
+    ldap_results = list(ldap_conn.get_users(
+        ldap_conn.get_whoami_dn(),
+        ae_status=AEStatus.active,
+        filterstr=ldap_filterstr,
         attrlist=user_attr_list,
-    )
+        ref_attr='aeLoginGroups',
+    ))
+
     search_end_time = time.time()
 
     # Close LDAP connection
@@ -506,105 +408,89 @@ def main():
 
     my_logger.debug(
         'Found %d LDAP entries in %0.3f s',
-        len(all_entries),
+        len(ldap_results),
         search_end_time-search_start_time
     )
 
     active_userid_set = set()
 
-    for ldap_dn, ldap_entry in all_entries:
+    for res in ldap_results:
 
-        if ldap_dn is None:
-            # Silently ignore search continuations (referrals)
-            break
+        for user in res.rdata:
 
-        try:
-            log_username = '%s (%s)' % (ldap_entry['cn'][0], ldap_entry['uid'][0])
-        except KeyError:
-            log_username = '%s' % (ldap_entry['uid'][0])
+            ldap_uid = user.entry_s['uid'][0]
 
-        ldap_uid = ldap_entry['uid'][0].lower()
-
-        if ldap_uid in excluded_users:
-            my_logger.debug('Ignoring user %s', repr(log_username))
-            continue
-
-        try:
-            pwd.getpwnam(ldap_uid)
-        except KeyError:
-            my_logger.warn(
-                'Username %s not found with getpwnam()',
-                repr(ldap_uid)
-            )
-        else:
-            my_logger.debug(
-                'Found username %s with getpwnam()',
-                repr(ldap_uid)
-            )
-
-        active_userid_set.add(ldap_uid)
-        for ssh_key in ldap_entry['sshPublicKey']:
-            if ssh_reobj.match(ssh_key) is None:
-                my_logger.warn(
-                    'Erroneous SSH key in LDAP entry %s',
-                    repr(ldap_dn)
-                )
+            if ldap_uid in excluded_users:
+                my_logger.debug('Ignoring user %r', ldap_uid)
                 continue
 
-        if RHOST_ATTR and RHOST_ATTR in ldap_entry:
-            # FIX ME! Probably we should check for correct values!
-            my_logger.debug('attribute %r contains: %r', RHOST_ATTR, ldap_entry[RHOST_ATTR])
-            ssh_key_prefix = 'from="%s" ' % (','.join(ldap_entry[RHOST_ATTR]))
-        else:
-            ssh_key_prefix = ''
-        my_logger.debug('ssh_key_prefix = %r', ssh_key_prefix)
+            try:
+                pwd.getpwnam(ldap_uid)
+            except KeyError:
+                my_logger.warning('Username %r not found with getpwnam()', ldap_uid)
+            else:
+                my_logger.debug('Found username %s with getpwnam()', ldap_uid)
 
-        new_user_ssh_keys = sorted([
-            ''.join((ssh_key_prefix, ssh_key.strip()))
-            for ssh_key in ldap_entry['sshPublicKey']
-        ])
+            active_userid_set.add(ldap_uid)
+            for ssh_key in user.entry_s['sshPublicKey']:
+                if ssh_reobj.match(ssh_key) is None:
+                    my_logger.warning('Errornous SSH key in LDAP entry %s', user.dn_s)
+                    continue
 
-        ssh_key_path_name = os.path.join(path_prefix, ldap_uid)
-        try:
-            old_user_ssh_key = open(ssh_key_path_name, 'rb').read().split('\n')
-        except IOError:
-            my_logger.info(
-                'Adding SSH key file %s for %s (mode=%04o)',
-                repr(ssh_key_path_name),
-                repr(log_username),
-                AUTHORIZED_KEY_MODE,
-            )
-            write_ssh_file(ssh_key_path_name, new_user_ssh_keys)
-        else:
-            old_user_ssh_key.sort()
-            if old_user_ssh_key != new_user_ssh_keys:
+            if RHOST_ATTR and RHOST_ATTR in user.entry_s:
+                # FIX ME! Probably we should check for correct values!
+                my_logger.debug('attribute %r contains: %r', RHOST_ATTR, user.entry_s[RHOST_ATTR])
+                ssh_key_prefix = 'from="%s" ' % (','.join(user.entry_s[RHOST_ATTR]))
+            else:
+                ssh_key_prefix = ''
+            my_logger.debug('ssh_key_prefix = %r', ssh_key_prefix)
+
+            new_user_ssh_keys = sorted([
+                ''.join((ssh_key_prefix, ssh_key.strip()))
+                for ssh_key in user.entry_s['sshPublicKey']
+            ])
+
+            ssh_key_path_name = os.path.join(path_prefix, ldap_uid)
+            try:
+                old_user_ssh_key = open(ssh_key_path_name, 'r').read().split('\n')
+            except IOError:
                 my_logger.info(
-                    'Updating SSH key file %s for %s (mode=%04o)',
-                    repr(ssh_key_path_name),
-                    repr(log_username),
+                    'Adding SSH key file %r for %r (mode=%04o)',
+                    ssh_key_path_name,
+                    ldap_uid,
                     AUTHORIZED_KEY_MODE,
                 )
                 write_ssh_file(ssh_key_path_name, new_user_ssh_keys)
             else:
-                my_logger.debug(
-                    'Old SSH key file unchanged %s of %s',
-                    repr(ssh_key_path_name),
-                    repr(log_username)
-                )
+                old_user_ssh_key.sort()
+                if old_user_ssh_key != new_user_ssh_keys:
+                    my_logger.info(
+                        'Updating SSH key file %r for %r (mode=%04o)',
+                        ssh_key_path_name,
+                        ldap_uid,
+                        AUTHORIZED_KEY_MODE,
+                    )
+                    write_ssh_file(ssh_key_path_name, new_user_ssh_keys)
+                else:
+                    my_logger.debug(
+                        'Old SSH key file unchanged %r of %r',
+                        ssh_key_path_name,
+                        ldap_uid,
+                    )
 
     path_prefix_len = len(path_prefix)
 
     existing_ssh_key_files = glob.glob(os.path.join(path_prefix, '*'))
     my_logger.debug(
-        '%d existing SSH key files found: %s',
+        '%d existing SSH key files found: %r',
         len(existing_ssh_key_files),
-        repr(existing_ssh_key_files)
+        existing_ssh_key_files,
     )
-    old_userid_set = set([
+    old_userid_set = {
         p[path_prefix_len:]
         for p in existing_ssh_key_files
         if p[path_prefix_len:] not in excluded_users
-    ])
+    }
     my_logger.debug(
         '%d existing user IDs: %s',
         len(old_userid_set),
@@ -629,7 +515,7 @@ def main():
         )
         for old_userid in to_be_removed:
             old_sshkey_filename = os.path.join(path_prefix, old_userid)
-            my_logger.info('Removing SSH key file %s', repr(old_sshkey_filename))
+            my_logger.info('Removing SSH key file %r', old_sshkey_filename)
             os.remove(old_sshkey_filename)
 
 
