@@ -1,5 +1,5 @@
 galaxy_info:
-  role_name: ae-dir-linux-client
+  role_name: aedir_linux_client
   author: Michael Ströder
   description: AE-DIR Linux client integration with sssd or nss-pam-ldapd (deprecated)
   
